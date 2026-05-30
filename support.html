@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dhikr — Support</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f1923;
+      color: #e8e0d0;
+      min-height: 100vh;
+      padding: 48px 24px;
+    }
+    .wrap { max-width: 580px; margin: 0 auto; }
+    .badge {
+      display: inline-block;
+      background: rgba(201,168,76,0.12);
+      border: 1px solid rgba(201,168,76,0.3);
+      color: #C9A84C;
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      padding: 5px 12px;
+      border-radius: 20px;
+      margin-bottom: 24px;
+    }
+    h1 { font-size: 28px; font-weight: 600; color: #f5f0e8; margin-bottom: 8px; }
+    .subtitle { font-size: 15px; color: rgba(245,240,232,0.5); margin-bottom: 48px; }
+    .card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      padding: 28px;
+      margin-bottom: 16px;
+    }
+    h2 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #C9A84C;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .q { font-size: 15px; color: #f5f0e8; font-weight: 500; margin-bottom: 6px; }
+    .a { font-size: 14px; color: rgba(245,240,232,0.55); line-height: 1.7; margin-bottom: 20px; }
+    .a:last-child { margin-bottom: 0; }
+    .contact-btn {
+      display: inline-block;
+      background: rgba(201,168,76,0.12);
+      border: 1px solid rgba(201,168,76,0.3);
+      color: #C9A84C;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 14px;
+      text-decoration: none;
+      margin-top: 8px;
+    }
+    a { color: #C9A84C; text-decoration: none; }
+    .footer { text-align: center; margin-top: 48px; font-size: 12px; color: rgba(245,240,232,0.25); letter-spacing: 1px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="badge">Support</div>
+    <h1>How can we help?</h1>
+    <p class="subtitle">We usually respond within 24 hours.</p>
+
+    <div class="card">
+      <h2>Common Questions</h2>
+
+      <p class="q">Prayer times look wrong</p>
+      <p class="a">Prayer times are calculated estimates. Grant location permission in your device settings for accurate local times. If location is off, the app defaults to Mecca time. For precise times, always verify with your local mosque.</p>
+
+      <p class="q">My count reset unexpectedly</p>
+      <p class="a">Tapping the phrase text or swiping switches to the next dhikr and resets the count. Your session is automatically saved to history before resetting. To avoid accidental resets, only use the ring area to count.</p>
+
+      <p class="q">Volume button counting not working</p>
+      <p class="a">Volume button counting is an Android-only feature and requires a native build. It will not work in Expo Go during development.</p>
+
+      <p class="q">How do I delete a custom phrase?</p>
+      <p class="a">Settings → Custom Phrases → tap ✕ next to the phrase you want to remove.</p>
+
+      <p class="q">How do I exit pocket mode?</p>
+      <p class="a">Long-press anywhere on the dark screen for 0.6 seconds. The app will return to normal.</p>
+
+      <p class="q">Notifications are not appearing</p>
+      <p class="a">Make sure Dhikr has notification permissions enabled in your device Settings → Notifications → Dhikr. Notifications require a native build — they do not work in Expo Go.</p>
+    </div>
+
+    <div class="card">
+      <h2>Contact Us</h2>
+      <p style="font-size:15px; color:rgba(245,240,232,0.65); line-height:1.7; margin-bottom:16px;">
+        For bug reports, feature requests, or anything else — email us directly.
+      </p>
+      <a class="contact-btn" href="mailto:mufeedmuneer9@gmail.com">mufeedmuneer9@gmail.com</a>
+    </div>
+
+    <p class="footer">DHIKR · ذكر</p>
+  </div>
+</body>
+</html>
