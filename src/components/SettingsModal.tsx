@@ -1,9 +1,13 @@
 import React from 'react';
 import {
-  Modal, Platform, Pressable, StyleSheet,
+  Linking, Modal, Platform, Pressable, StyleSheet,
   Switch, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
 import { colors, fonts } from '../constants/theme';
+
+const PRIVACY_URL = 'https://imufiii.github.io/dhikr/privacy.html';
+const TERMS_URL = 'https://imufiii.github.io/dhikr/terms.html';
+const SUPPORT_URL = 'https://imufiii.github.io/dhikr/support.html';
 
 interface Props {
   visible: boolean;
@@ -79,10 +83,34 @@ export default function SettingsModal({
             />
           </View>
 
-          <TouchableOpacity style={[styles.row, { borderBottomWidth: 0 }]} onPress={onManagePhrases} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.row} onPress={onManagePhrases} activeOpacity={0.7}>
             <View>
               <Text style={styles.label}>Custom Phrases</Text>
               <Text style={styles.sub}>Add your own Arabic dhikr</Text>
+            </View>
+            <Text style={styles.chevron}>›</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.row} onPress={() => Linking.openURL(SUPPORT_URL)} activeOpacity={0.7}>
+            <View>
+              <Text style={styles.label}>Support</Text>
+              <Text style={styles.sub}>Get help or send feedback</Text>
+            </View>
+            <Text style={styles.chevron}>›</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.row} onPress={() => Linking.openURL(PRIVACY_URL)} activeOpacity={0.7}>
+            <View>
+              <Text style={styles.label}>Privacy Policy</Text>
+              <Text style={styles.sub}>No data leaves your device</Text>
+            </View>
+            <Text style={styles.chevron}>›</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={[styles.row, { borderBottomWidth: 0 }]} onPress={() => Linking.openURL(TERMS_URL)} activeOpacity={0.7}>
+            <View>
+              <Text style={styles.label}>Terms of Use</Text>
+              <Text style={styles.sub}>imufiii.github.io/dhikr</Text>
             </View>
             <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>
