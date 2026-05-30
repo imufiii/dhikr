@@ -1,12 +1,12 @@
 import React from 'react';
 import {
-  Linking, Modal, Platform, Pressable, StyleSheet,
-  Switch, Text, TextInput, TouchableOpacity, View,
+  Linking, Modal, Platform, Pressable, ScrollView,
+  StyleSheet, Switch, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
 import { colors, fonts } from '../constants/theme';
 
 const PRIVACY_URL = 'https://imufiii.github.io/dhikr/privacy.html';
-const TERMS_URL = 'https://imufiii.github.io/dhikr/terms.html';
+const TERMS_URL   = 'https://imufiii.github.io/dhikr/terms.html';
 const SUPPORT_URL = 'https://imufiii.github.io/dhikr/support.html';
 
 interface Props {
@@ -23,6 +23,48 @@ interface Props {
   onClose: () => void;
 }
 
+function Icon({ symbol, bg }: { symbol: string; bg: string }) {
+  return (
+    <View style={[styles.iconBox, { backgroundColor: bg }]}>
+      <Text style={styles.iconSymbol}>{symbol}</Text>
+    </View>
+  );
+}
+
+function SwitchRow({ icon, bg, label, sub, value, onChange }: {
+  icon: string; bg: string; label: string; sub: string;
+  value: boolean; onChange: (v: boolean) => void;
+}) {
+  return (
+    <View style={styles.row}>
+      <Icon symbol={icon} bg={bg} />
+      <View style={styles.rowText}>
+        <Text style={styles.label}>{label}</Text>
+        <Text style={styles.sub}>{sub}</Text>
+      </View>
+      <Switch value={value} onValueChange={onChange}
+        trackColor={{ false: colors.muted2, true: colors.gold }}
+        thumbColor={colors.white} />
+    </View>
+  );
+}
+
+function LinkRow({ icon, bg, label, sub, onPress, last }: {
+  icon: string; bg: string; label: string; sub: string;
+  onPress: () => void; last?: boolean;
+}) {
+  return (
+    <TouchableOpacity style={[styles.row, last && styles.rowLast]} onPress={onPress} activeOpacity={0.65}>
+      <Icon symbol={icon} bg={bg} />
+      <View style={styles.rowText}>
+        <Text style={styles.label}>{label}</Text>
+        <Text style={styles.sub}>{sub}</Text>
+      </View>
+      <Text style={styles.chevron}>›</Text>
+    </TouchableOpacity>
+  );
+}
+
 export default function SettingsModal({
   visible, haptic, setHaptic, shake, setShake,
   volumeBtn, setVolumeBtn, target, selectTarget,
@@ -33,87 +75,67 @@ export default function SettingsModal({
       <Pressable style={styles.overlay} onPress={onClose}>
         <View style={styles.sheet}>
           <View style={styles.handle} />
-          <Text style={styles.title}>Settings</Text>
+          <Text style={styles.sheetTitle}>Settings</Text>
 
-          <View style={styles.row}>
-            <View>
-              <Text style={styles.label}>Haptic Feedback</Text>
-              <Text style={styles.sub}>Vibrate on each count</Text>
-            </View>
-            <Switch value={haptic} onValueChange={setHaptic}
-              trackColor={{ false: colors.muted2, true: colors.gold }}
-              thumbColor={colors.white} />
-          </View>
+          <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
 
-          <View style={styles.row}>
-            <View>
-              <Text style={styles.label}>Shake to Count</Text>
-              <Text style={styles.sub}>Shake phone to increment</Text>
+            {/* Counter */}
+            <Text style={styles.sectionLabel}>Counter</Text>
+            <View style={styles.card}>
+              <SwitchRow icon="◎" bg="#1A3A2A" label="Haptic Feedback" sub="Vibrate on each count" value={haptic} onChange={setHaptic} />
+              <SwitchRow icon="⟲" bg="#1A2A3A" label="Shake to Count" sub="Shake phone to increment" value={shake} onChange={setShake} />
+              <View style={[styles.row, styles.rowLast]}>
+                <Icon symbol="◁" bg="#2A1A3A" />
+                <View style={styles.rowText}>
+                  <Text style={styles.label}>Volume Button</Text>
+                  <Text style={styles.sub}>Android · counts on lock screen</Text>
+                </View>
+                <Switch value={volumeBtn} onValueChange={setVolumeBtn}
+                  trackColor={{ false: colors.muted2, true: colors.gold }}
+                  thumbColor={colors.white} />
+              </View>
             </View>
-            <Switch value={shake} onValueChange={setShake}
-              trackColor={{ false: colors.muted2, true: colors.gold }}
-              thumbColor={colors.white} />
-          </View>
 
-          <View style={styles.row}>
-            <View>
-              <Text style={styles.label}>Volume Button (Android)</Text>
-              <Text style={styles.sub}>Vol-up counts even on lock screen</Text>
+            {/* Target */}
+            <Text style={styles.sectionLabel}>Target</Text>
+            <View style={styles.card}>
+              <View style={[styles.row, styles.rowLast]}>
+                <Icon symbol="◈" bg="#2A2A1A" />
+                <View style={styles.rowText}>
+                  <Text style={styles.label}>Custom Target</Text>
+                  <Text style={styles.sub}>Set any number as your goal</Text>
+                </View>
+                <TextInput
+                  style={styles.input}
+                  keyboardType="number-pad"
+                  placeholder="e.g. 500"
+                  placeholderTextColor={colors.muted}
+                  defaultValue={![0, 33, 99, 100, 1000].includes(target) ? String(target) : ''}
+                  onEndEditing={e => {
+                    const n = parseInt(e.nativeEvent.text);
+                    if (!isNaN(n) && n > 0) selectTarget(n);
+                  }}
+                />
+              </View>
             </View>
-            <Switch value={volumeBtn} onValueChange={setVolumeBtn}
-              trackColor={{ false: colors.muted2, true: colors.gold }}
-              thumbColor={colors.white} />
-          </View>
 
-          <View style={styles.row}>
-            <View>
-              <Text style={styles.label}>Custom Target</Text>
-              <Text style={styles.sub}>Enter any number</Text>
+            {/* Phrases */}
+            <Text style={styles.sectionLabel}>Phrases</Text>
+            <View style={styles.card}>
+              <LinkRow icon="۞" bg="#1A2A2A" label="Custom Phrases" sub="Add your own Arabic dhikr" onPress={onManagePhrases} last />
             </View>
-            <TextInput
-              style={styles.input}
-              keyboardType="number-pad"
-              placeholder="e.g. 500"
-              placeholderTextColor={colors.muted}
-              defaultValue={![0, 33, 99, 100, 1000].includes(target) ? String(target) : ''}
-              onEndEditing={e => {
-                const n = parseInt(e.nativeEvent.text);
-                if (!isNaN(n) && n > 0) selectTarget(n);
-              }}
-            />
-          </View>
 
-          <TouchableOpacity style={styles.row} onPress={onManagePhrases} activeOpacity={0.7}>
-            <View>
-              <Text style={styles.label}>Custom Phrases</Text>
-              <Text style={styles.sub}>Add your own Arabic dhikr</Text>
+            {/* About */}
+            <Text style={styles.sectionLabel}>About</Text>
+            <View style={styles.card}>
+              <LinkRow icon="?" bg="#1A2A3A" label="Support" sub="Get help or send feedback" onPress={() => Linking.openURL(SUPPORT_URL)} />
+              <LinkRow icon="◉" bg="#1A3A2A" label="Privacy Policy" sub="No data leaves your device" onPress={() => Linking.openURL(PRIVACY_URL)} />
+              <LinkRow icon="≡" bg="#2A2A1A" label="Terms of Use" sub="imufiii.github.io/dhikr" onPress={() => Linking.openURL(TERMS_URL)} last />
             </View>
-            <Text style={styles.chevron}>›</Text>
-          </TouchableOpacity>
 
-          <TouchableOpacity style={styles.row} onPress={() => Linking.openURL(SUPPORT_URL)} activeOpacity={0.7}>
-            <View>
-              <Text style={styles.label}>Support</Text>
-              <Text style={styles.sub}>Get help or send feedback</Text>
-            </View>
-            <Text style={styles.chevron}>›</Text>
-          </TouchableOpacity>
+            <Text style={styles.version}>Dhikr · v1.0.0</Text>
 
-          <TouchableOpacity style={styles.row} onPress={() => Linking.openURL(PRIVACY_URL)} activeOpacity={0.7}>
-            <View>
-              <Text style={styles.label}>Privacy Policy</Text>
-              <Text style={styles.sub}>No data leaves your device</Text>
-            </View>
-            <Text style={styles.chevron}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.row, { borderBottomWidth: 0 }]} onPress={() => Linking.openURL(TERMS_URL)} activeOpacity={0.7}>
-            <View>
-              <Text style={styles.label}>Terms of Use</Text>
-              <Text style={styles.sub}>imufiii.github.io/dhikr</Text>
-            </View>
-            <Text style={styles.chevron}>›</Text>
-          </TouchableOpacity>
+          </ScrollView>
         </View>
       </Pressable>
     </Modal>
@@ -123,17 +145,19 @@ export default function SettingsModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(13,31,26,0.85)',
+    backgroundColor: 'rgba(10,20,18,0.9)',
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: '#162032',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
+    backgroundColor: '#111C2A',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingTop: 12,
+    paddingHorizontal: 20,
     paddingBottom: Platform.OS === 'ios' ? 44 : 28,
     borderTopWidth: 1,
     borderTopColor: colors.goldDim,
+    maxHeight: '88%',
   },
   handle: {
     width: 36,
@@ -141,24 +165,60 @@ const styles = StyleSheet.create({
     backgroundColor: colors.muted2,
     borderRadius: 2,
     alignSelf: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
-  title: {
+  sheetTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.white,
+    fontFamily: fonts.uiBold,
+    marginBottom: 20,
+    paddingHorizontal: 4,
+  },
+  sectionLabel: {
     fontSize: 11,
     color: colors.muted,
-    letterSpacing: 2,
+    letterSpacing: 1.5,
     textTransform: 'uppercase',
-    marginBottom: 20,
     fontFamily: fonts.ui,
+    marginBottom: 8,
+    marginLeft: 4,
+    marginTop: 4,
+  },
+  card: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.07)',
+    marginBottom: 20,
+    overflow: 'hidden',
   },
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 14,
-    minHeight: 56,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
     borderBottomWidth: 1,
-    borderBottomColor: colors.muted2,
+    borderBottomColor: 'rgba(255,255,255,0.05)',
+    gap: 12,
+  },
+  rowLast: {
+    borderBottomWidth: 0,
+  },
+  iconBox: {
+    width: 34,
+    height: 34,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  iconSymbol: {
+    fontSize: 15,
+    color: colors.gold,
+  },
+  rowText: {
+    flex: 1,
   },
   label: {
     fontSize: 14,
@@ -168,8 +228,13 @@ const styles = StyleSheet.create({
   sub: {
     fontSize: 11,
     color: colors.muted,
-    marginTop: 2,
+    marginTop: 1,
     fontFamily: fonts.ui,
+  },
+  chevron: {
+    fontSize: 20,
+    color: colors.muted,
+    marginRight: -2,
   },
   input: {
     backgroundColor: colors.muted2,
@@ -182,9 +247,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     width: 80,
     textAlign: 'center',
+    fontFamily: fonts.ui,
   },
-  chevron: {
-    fontSize: 22,
+  version: {
+    textAlign: 'center',
+    fontSize: 11,
     color: colors.muted,
+    opacity: 0.4,
+    fontFamily: fonts.ui,
+    letterSpacing: 1,
+    marginBottom: 8,
   },
 });
