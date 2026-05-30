@@ -1,17 +1,24 @@
 {
   "expo": {
-    "name": "dhikr",
+    "name": "Dhikr",
     "slug": "dhikr",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "ios": {
-      "supportsTablet": true
+      "bundleIdentifier": "com.mufeedmuneer.dhikr",
+      "supportsTablet": false,
+      "privacyPolicyUrl": "https://imufil.github.io/dhikr/privacy.html",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Used to calculate local prayer times."
+      }
     },
     "android": {
+      "package": "com.mufeedmuneer.dhikr",
+      "privacyPolicyUrl": "https://imufil.github.io/dhikr/privacy.html",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#111827",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -20,6 +27,23 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-font",
+      "expo-splash-screen",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#C9A84C"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Used to calculate local prayer times."
+        }
+      ]
+    ]
   }
 }
