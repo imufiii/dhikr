@@ -9,14 +9,14 @@
     "ios": {
       "bundleIdentifier": "com.mufeedmuneer.dhikr",
       "supportsTablet": false,
-      "privacyPolicyUrl": "https://imufil.github.io/dhikr/privacy.html",
+      "privacyPolicyUrl": "https://imufiii.github.io/dhikr/privacy.html",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Used to calculate local prayer times."
       }
     },
     "android": {
       "package": "com.mufeedmuneer.dhikr",
-      "privacyPolicyUrl": "https://imufil.github.io/dhikr/privacy.html",
+      "privacyPolicyUrl": "https://imufiii.github.io/dhikr/privacy.html",
       "adaptiveIcon": {
         "backgroundColor": "#111827",
         "foregroundImage": "./assets/android-icon-foreground.png",
