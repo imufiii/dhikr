@@ -1,9 +1,10 @@
-import React from 'react';
+import React from 'react'; // needed for JSX transform compatibility
 import {
   Linking, Modal, Platform, Pressable, ScrollView,
   StyleSheet, Switch, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
 import { colors, fonts } from '../constants/theme';
+import BarakahBudgetCard from './BarakahBudgetCard';
 
 const PRIVACY_URL = 'https://imufiii.github.io/dhikr/privacy.html';
 const TERMS_URL   = 'https://imufiii.github.io/dhikr/terms.html';
@@ -132,6 +133,8 @@ export default function SettingsModal({
               <LinkRow icon="◉" bg="#1A3A2A" label="Privacy Policy" sub="No data leaves your device" onPress={() => Linking.openURL(PRIVACY_URL)} />
               <LinkRow icon="≡" bg="#2A2A1A" label="Terms of Use" sub="imufiii.github.io/dhikr" onPress={() => Linking.openURL(TERMS_URL)} last />
             </View>
+
+            <BarakahBudgetCard />
 
             <Text style={styles.version}>Dhikr · v1.0.0</Text>
 
