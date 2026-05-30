@@ -2,7 +2,7 @@ import { Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { colors, fonts } from '../constants/theme';
 
 // TODO: replace with actual Barakah Budget App Store URL
-const APP_STORE_URL = 'https://apps.apple.com/app/barakah-budget/REPLACE_WITH_ID';
+const APP_STORE_URL = 'https://apps.apple.com/app/id6772805412';
 
 export default function BarakahBudgetCard() {
   return (
