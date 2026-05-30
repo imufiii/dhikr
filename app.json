@@ -12,7 +12,8 @@
       "privacyPolicyUrl": "https://imufiii.github.io/dhikr/privacy.html",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Used to calculate local prayer times.",
-        "NSUserTrackingUsageDescription": "Dhikr does not track you."
+        "NSUserTrackingUsageDescription": "Dhikr does not track you.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
