@@ -194,8 +194,8 @@ export default function DhikrScreen() {
   const reset = useCallback(() => {
     if (countRef.current > 0) {
       const duration = Math.round((Date.now() - sessionStart.current) / 1000);
-      const ro = allPhrases[phraseIndexRef.current]?.ro ?? PHRASES[phraseIndexRef.current].ro;
-      const ar = allPhrases[phraseIndexRef.current]?.ar ?? PHRASES[phraseIndexRef.current].ar;
+      const ro = allPhrasesRef.current[phraseIndexRef.current]?.ro ?? PHRASES[phraseIndexRef.current].ro;
+      const ar = allPhrasesRef.current[phraseIndexRef.current]?.ar ?? PHRASES[phraseIndexRef.current].ar;
       const record: SessionRecord = {
         phraseRo: ro, phraseAr: ar,
         count: countRef.current, target: targetRef.current, duration,
@@ -213,8 +213,8 @@ export default function DhikrScreen() {
   const switchPhrase = useCallback((delta: number) => {
     if (countRef.current > 0) {
       const duration = Math.round((Date.now() - sessionStart.current) / 1000);
-      const ro = allPhrases[phraseIndexRef.current]?.ro ?? PHRASES[phraseIndexRef.current].ro;
-      const ar = allPhrases[phraseIndexRef.current]?.ar ?? PHRASES[phraseIndexRef.current].ar;
+      const ro = allPhrasesRef.current[phraseIndexRef.current]?.ro ?? PHRASES[phraseIndexRef.current].ro;
+      const ar = allPhrasesRef.current[phraseIndexRef.current]?.ar ?? PHRASES[phraseIndexRef.current].ar;
       const record: SessionRecord = {
         phraseRo: ro, phraseAr: ar,
         count: countRef.current, target: targetRef.current, duration,
@@ -226,7 +226,7 @@ export default function DhikrScreen() {
     setCount(0);
     sessionStart.current = Date.now();
     progressAnim.setValue(0);
-    setPhraseIndex(i => (i + delta + allPhrases.length) % allPhrases.length);
+    setPhraseIndex(i => (i + delta + allPhrasesRef.current.length) % allPhrasesRef.current.length);
     triggerHaptic('light');
   }, [triggerHaptic]);
 
@@ -257,7 +257,7 @@ export default function DhikrScreen() {
   useEffect(() => { allPhrasesRef.current = allPhrases; }, [allPhrases]);
 
   const { pocketMode, enterPocketMode, exitPocketMode } = usePocketMode();
-  const { nextPrayer } = usePrayerTimes();
+  const { nextPrayer, locationDenied } = usePrayerTimes();
   useShakeDetector({ enabled: shake, onShake: increment });
   useVolumeButton({ enabled: volumeBtn, onPress: increment });
 
@@ -310,7 +310,9 @@ export default function DhikrScreen() {
       </TouchableOpacity>
 
       {nextPrayer && (
-        <Text style={styles.nextPrayer}>{nextPrayer.name} · {nextPrayer.timeString}</Text>
+        <Text style={styles.nextPrayer}>
+          {nextPrayer.name} · {nextPrayer.timeString}{locationDenied ? ' · Mecca' : ''}
+        </Text>
       )}
 
       <Pressable

@@ -89,7 +89,7 @@ export default function SettingsModal({
                 <Icon symbol="◁" bg="#2A1A3A" />
                 <View style={styles.rowText}>
                   <Text style={styles.label}>Volume Button</Text>
-                  <Text style={styles.sub}>Android · counts on lock screen</Text>
+                  <Text style={styles.sub}>Count with volume buttons</Text>
                 </View>
                 <Switch value={volumeBtn} onValueChange={setVolumeBtn}
                   trackColor={{ false: colors.muted2, true: colors.gold }}
