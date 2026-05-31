@@ -12,8 +12,7 @@
       "privacyPolicyUrl": "https://imufiii.github.io/dhikr/privacy.html",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Used to calculate local prayer times.",
-        "NSUserTrackingUsageDescription": "Dhikr does not track you.",
-        "ITSAppUsesNonExemptEncryption": false
+"ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -36,7 +35,15 @@
     },
     "plugins": [
       "expo-font",
-      "expo-splash-screen",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 300,
+          "resizeMode": "contain",
+          "backgroundColor": "#111827"
+        }
+      ],
       [
         "expo-notifications",
         {
