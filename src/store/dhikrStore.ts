@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { UserDua } from '../constants/universalDuas';
 
 export interface SessionRecord {
   phraseRo: string;
@@ -15,6 +16,15 @@ export interface CustomPhrase {
   en: string;
 }
 
+export interface DailyDuaRecord {
+  duaId: string;
+  situation: string;
+  arabicText: string;
+  transliteration: string;
+  date: string;
+  timesRecited: number;
+}
+
 export interface DhikrState {
   phraseIndex: number;
   target: number;
@@ -27,6 +37,10 @@ export interface DhikrState {
   dailyTotals: Record<string, number>;
   customPhrases: CustomPhrase[];
   phraseTotals: Record<string, number>;
+  budgetCardShown?: boolean;
+  todaysDua?: DailyDuaRecord | null;
+  duaHistory?: DailyDuaRecord[];
+  userDuas?: UserDua[];
 }
 
 const KEY = 'dhikr_state_v2';

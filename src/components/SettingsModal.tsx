@@ -134,6 +134,9 @@ export default function SettingsModal({
               <LinkRow icon="≡" bg="#2A2A1A" label="Terms of Use" sub="imufiii.github.io/dhikr" onPress={() => Linking.openURL(TERMS_URL)} last />
             </View>
 
+            {/* The live served Noor ad now lives on the main screen (a single
+                serve per session). This stays a static Barakah Budget cross-promo. */}
+            <Text style={styles.sectionLabel}>Also from us</Text>
             <BarakahBudgetCard />
 
             <Text style={styles.version}>Dhikr · v1.0.0</Text>

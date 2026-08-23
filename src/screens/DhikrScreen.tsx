@@ -3,7 +3,9 @@ import {
   Animated,
   Dimensions,
   Easing,
+  Modal,
   PanResponder,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -16,14 +18,20 @@ import Svg, { Circle } from 'react-native-svg';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fonts } from '../constants/theme';
 import { PHRASES, TARGETS } from '../constants/phrases';
-import { loadState, saveState, DhikrState, SessionRecord, CustomPhrase, todayString } from '../store/dhikrStore';
+import { loadState, saveState, DhikrState, SessionRecord, CustomPhrase, todayString, DailyDuaRecord } from '../store/dhikrStore';
 import { useShakeDetector } from '../hooks/useShakeDetector';
 import { usePocketMode } from '../hooks/usePocketMode';
 import { useVolumeButton } from '../hooks/useVolumeButton';
 import HistoryModal from '../components/HistoryModal';
 import SettingsModal from '../components/SettingsModal';
 import PhrasesModal from '../components/PhrasesModal';
+import BarakahBudgetCard from '../components/BarakahBudgetCard';
+import NoorAd from '../components/NoorAd';
+import SimpleDuaSelector from '../components/SimpleDuaSelector';
+import ImportDuaModal from '../components/ImportDuaModal';
+import DuaLibrary from '../components/DuaLibrary';
 import { usePrayerTimes } from '../hooks/usePrayerTimes';
+import { UNIVERSAL_DUAS, UserDua } from '../constants/universalDuas';
 
 const { width } = Dimensions.get('window');
 const RING_SIZE = Math.min(width * 0.72, 340);
@@ -53,6 +61,12 @@ export default function DhikrScreen() {
   const [showSettings, setShowSettings] = useState(false);
   const [showPhrases, setShowPhrases] = useState(false);
   const [completing, setCompleting] = useState(false);
+  const [budgetCardShown, setBudgetCardShown] = useState(false);
+  const [showBudgetCard, setShowBudgetCard] = useState(false);
+  const [userDuas, setUserDuas] = useState<UserDua[]>(UNIVERSAL_DUAS);
+  const [selectedDuaId, setSelectedDuaId] = useState<string | null>(UNIVERSAL_DUAS[0].id);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showDuaLibrary, setShowDuaLibrary] = useState(false);
 
   const sessionStart = useRef(Date.now());
   const lastDateRef = useRef('');
@@ -83,6 +97,14 @@ export default function DhikrScreen() {
       setPhraseTotals(s.phraseTotals ?? {});
       setCustomPhrases(s.customPhrases ?? []);
       lastDateRef.current = s.lastDate;
+      const shown = s.budgetCardShown ?? false;
+      setBudgetCardShown(shown);
+      if (s.userDuas && s.userDuas.length > 0) {
+        setUserDuas(s.userDuas);
+        if (s.userDuas[0]) {
+          setSelectedDuaId(s.userDuas[0].id);
+        }
+      }
       setReady(true);
     });
     activateKeepAwakeAsync();
@@ -108,8 +130,8 @@ export default function DhikrScreen() {
 
   useEffect(() => {
     if (!ready) return;
-    saveState({ phraseIndex, target, haptic, shake, volumeBtn, history, todayCount, lastDate: lastDateRef.current, dailyTotals, phraseTotals, customPhrases });
-  }, [phraseIndex, target, haptic, shake, volumeBtn, history, todayCount, dailyTotals, phraseTotals, customPhrases, ready]);
+    saveState({ phraseIndex, target, haptic, shake, volumeBtn, history, todayCount, lastDate: lastDateRef.current, dailyTotals, phraseTotals, customPhrases, budgetCardShown, userDuas });
+  }, [phraseIndex, target, haptic, shake, volumeBtn, history, todayCount, dailyTotals, phraseTotals, customPhrases, budgetCardShown, userDuas, ready]);
 
   useEffect(() => {
     const pct = target > 0 ? Math.min(count / target, 1) : 0;
@@ -166,6 +188,9 @@ export default function DhikrScreen() {
     triggerHaptic('complete');
     flashScreen();
     showBanner();
+    if (!budgetCardShown && history.length >= 2) {
+      setTimeout(() => setShowBudgetCard(true), 2600);
+    }
     setTimeout(() => {
       setCount(0);
       sessionStart.current = Date.now();
@@ -244,6 +269,23 @@ export default function DhikrScreen() {
     })
   ).current;
 
+  const handleAddDua = useCallback((dua: UserDua) => {
+    setUserDuas(d => [...d, dua]);
+    setShowImportModal(false);
+  }, []);
+
+  const handleEditDua = useCallback((dua: UserDua) => {
+    setUserDuas(d => d.map(x => x.id === dua.id ? dua : x));
+  }, []);
+
+  const handleDeleteDua = useCallback((id: string) => {
+    const filtered = userDuas.filter(x => x.id !== id);
+    setUserDuas(filtered);
+    if (selectedDuaId === id) {
+      setSelectedDuaId(filtered[0]?.id || null);
+    }
+  }, [selectedDuaId, userDuas]);
+
   const selectTarget = useCallback((t: number) => {
     setTarget(t);
     setCount(0);
@@ -256,7 +298,17 @@ export default function DhikrScreen() {
   const allPhrasesRef = useRef(allPhrases);
   useEffect(() => { allPhrasesRef.current = allPhrases; }, [allPhrases]);
 
-  const { pocketMode, enterPocketMode, exitPocketMode } = usePocketMode();
+  const { pocketMode, enterPocketMode: pocketModeEnter, exitPocketMode: pocketModeExit } = usePocketMode();
+
+  const enterPocketMode = useCallback(async () => {
+    await pocketModeEnter();
+  }, [pocketModeEnter]);
+
+  const exitPocketMode = useCallback(async () => {
+    await pocketModeExit();
+    triggerHaptic('complete');
+    showBanner();
+  }, [pocketModeExit, triggerHaptic, showBanner]);
   const { nextPrayer, locationDenied } = usePrayerTimes();
   useShakeDetector({ enabled: shake, onShake: increment });
   useVolumeButton({ enabled: volumeBtn, onPress: increment });
@@ -314,6 +366,16 @@ export default function DhikrScreen() {
           {nextPrayer.name} · {nextPrayer.timeString}{locationDenied ? ' · Mecca' : ''}
         </Text>
       )}
+
+      <View style={styles.duaCardContainer}>
+        <SimpleDuaSelector
+          duas={userDuas}
+          selectedId={selectedDuaId}
+          onSelect={setSelectedDuaId}
+          onImportPress={() => setShowImportModal(true)}
+          onLibraryPress={() => setShowDuaLibrary(true)}
+        />
+      </View>
 
       <Pressable
         style={[styles.ring, { width: RING_SIZE, height: RING_SIZE }]}
@@ -387,8 +449,15 @@ export default function DhikrScreen() {
             <TouchableOpacity style={styles.resetBtn} onPress={reset}>
               <Text style={styles.resetIcon}>↺</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.pocketBtn} onPress={enterPocketMode}>
-              <Text style={styles.pocketLabel}>Pocket</Text>
+            <TouchableOpacity
+              style={[styles.pocketBtn, pocketMode && styles.pocketBtnActive]}
+              onPress={pocketMode ? exitPocketMode : enterPocketMode}
+              onLongPress={exitPocketMode}
+              delayLongPress={800}
+            >
+              <Text style={[styles.pocketLabel, pocketMode && styles.pocketLabelActive]}>
+                {pocketMode ? '👆 Exit' : '🤐 Pocket'}
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -396,6 +465,14 @@ export default function DhikrScreen() {
             <Text style={styles.actionIcon}>⚙️</Text>
             <Text style={styles.actionLabel}>Settings</Text>
           </TouchableOpacity>
+        </View>
+
+        {/* Sponsored slot — sits BELOW the worship ring and controls, never over
+            it. Self-hides when the network has no ad to show (NoorAd returns
+            null on no-fill), so the layout only grows when there's real,
+            human-vetted inventory. See the placement analysis in the PR notes. */}
+        <View style={styles.adSlot}>
+          <NoorAd />
         </View>
       </View>
 
@@ -433,6 +510,34 @@ export default function DhikrScreen() {
           }
         }}
         onClose={() => setShowPhrases(false)}
+      />
+
+      <Modal visible={showBudgetCard} transparent animationType="slide" onRequestClose={() => { setShowBudgetCard(false); setBudgetCardShown(true); }}>
+        <Pressable style={styles.budgetOverlay} onPress={() => { setShowBudgetCard(false); setBudgetCardShown(true); }}>
+          <Pressable style={styles.budgetSheet} onPress={() => {}}>
+            <View style={styles.budgetHandle} />
+            <Text style={styles.budgetHeading}>Jazakallah khayr</Text>
+            <Text style={styles.budgetSub}>Complete your deen with halal finance</Text>
+            <BarakahBudgetCard />
+            <TouchableOpacity onPress={() => { setShowBudgetCard(false); setBudgetCardShown(true); }}>
+              <Text style={styles.budgetDismiss}>Maybe later</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      <ImportDuaModal
+        visible={showImportModal}
+        onAdd={handleAddDua}
+        onClose={() => setShowImportModal(false)}
+      />
+
+      <DuaLibrary
+        visible={showDuaLibrary}
+        duas={userDuas}
+        onEdit={handleEditDua}
+        onDelete={handleDeleteDua}
+        onClose={() => setShowDuaLibrary(false)}
       />
     </SafeAreaView>
   );
@@ -476,6 +581,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     paddingVertical: 8,
     gap: 4,
+  },
+  duaCardContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
   },
   arabicText: {
     fontSize: 28,
@@ -545,6 +654,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     paddingHorizontal: 24,
+  },
+  adSlot: {
+    alignSelf: 'stretch',
+    marginTop: 4,
   },
   todayText: {
     fontSize: 10,
@@ -620,16 +733,25 @@ const styles = StyleSheet.create({
     color: colors.muted,
   },
   pocketBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 14,
     backgroundColor: colors.muted2,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  pocketBtnActive: {
+    backgroundColor: colors.gold,
+    borderColor: colors.white,
   },
   pocketLabel: {
     fontSize: 10,
     color: colors.muted,
     letterSpacing: 0.5,
-    textTransform: 'uppercase',
+    fontFamily: fonts.uiBold,
+  },
+  pocketLabelActive: {
+    color: colors.bg,
   },
   pocketOverlay: {
     ...StyleSheet.absoluteFill,
@@ -644,5 +766,51 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     backgroundColor: colors.gold,
     opacity: 0.3,
+  },
+  budgetOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(10,20,18,0.88)',
+    justifyContent: 'flex-end',
+  },
+  budgetSheet: {
+    backgroundColor: '#111C2A',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingTop: 12,
+    paddingHorizontal: 20,
+    paddingBottom: Platform.OS === 'ios' ? 44 : 28,
+    borderTopWidth: 1,
+    borderTopColor: colors.goldDim,
+    gap: 6,
+  },
+  budgetHandle: {
+    width: 36,
+    height: 4,
+    backgroundColor: colors.muted2,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 12,
+  },
+  budgetHeading: {
+    fontSize: 18,
+    color: colors.white,
+    fontFamily: fonts.uiBold,
+    textAlign: 'center',
+  },
+  budgetSub: {
+    fontSize: 12,
+    color: colors.muted,
+    fontFamily: fonts.ui,
+    textAlign: 'center',
+    marginBottom: 8,
+    opacity: 0.8,
+  },
+  budgetDismiss: {
+    fontSize: 12,
+    color: colors.muted,
+    textAlign: 'center',
+    fontFamily: fonts.ui,
+    paddingVertical: 8,
+    opacity: 0.5,
   },
 });
