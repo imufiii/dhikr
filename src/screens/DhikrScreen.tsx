@@ -181,7 +181,11 @@ export default function DhikrScreen() {
     setHistory(h => [record, ...h].slice(0, 30));
     setTodayCount(t => t + currentCount);
     setPhraseTotals(pt => ({ ...pt, [currentPhrase.ro]: (pt[currentPhrase.ro] ?? 0) + currentCount }));
-    triggerHaptic('complete');
+    if (pocketMode && haptic) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    } else {
+      triggerHaptic('complete');
+    }
     flashScreen();
     showBanner();
     if (!budgetCardShown && history.length >= 2) {
