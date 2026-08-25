@@ -20,12 +20,13 @@ export default function DuaLibrary({ visible, duas, onEdit, onDelete, onClose }:
   const filteredDuas = useMemo(() => {
     if (!searchQuery.trim()) return duas;
     const query = searchQuery.toLowerCase();
-    return duas.filter(d =>
-      d.arabicText.includes(query) ||
-      d.transliteration.toLowerCase().includes(query) ||
-      d.englishMeaning.toLowerCase().includes(query) ||
-      d.source.toLowerCase().includes(query)
-    );
+    return duas.filter(d => {
+      const arabicMatch = d.arabicText.includes(searchQuery);
+      const translitMatch = d.transliteration.toLowerCase().includes(query);
+      const meaningMatch = d.englishMeaning.toLowerCase().includes(query);
+      const sourceMatch = d.source.toLowerCase().includes(query);
+      return arabicMatch || translitMatch || meaningMatch || sourceMatch;
+    });
   }, [duas, searchQuery]);
 
   const builtInDuas = filteredDuas.filter(d => d.isBuiltIn);
