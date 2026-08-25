@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import {
-  Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View,
+  KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
 import { colors, fonts } from '../constants/theme';
 import { UserDua } from '../constants/universalDuas';
@@ -88,7 +88,11 @@ export default function DuaLibrary({ visible, duas, onEdit, onDelete, onClose }:
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose}>
-        <View style={styles.sheet}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 32}
+          style={styles.sheet}
+        >
           <View style={styles.handle} />
           <Text style={styles.title}>My Dua Library</Text>
           <Text style={styles.subtitle}>{duas.length} duas total</Text>
@@ -101,7 +105,7 @@ export default function DuaLibrary({ visible, duas, onEdit, onDelete, onClose }:
             onChangeText={setSearchQuery}
           />
 
-          <ScrollView style={styles.list} showsVerticalScrollIndicator={false} bounces={false}>
+          <ScrollView style={styles.list} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} bounces={false}>
             {builtInDuas.length > 0 && (
               <>
                 <Text style={styles.sectionLabel}>Built-in Duas</Text>
@@ -128,7 +132,7 @@ export default function DuaLibrary({ visible, duas, onEdit, onDelete, onClose }:
               <Text style={styles.empty}>No duas yet. Add your first one!</Text>
             )}
           </ScrollView>
-        </View>
+        </KeyboardAvoidingView>
       </Pressable>
     </Modal>
   );
