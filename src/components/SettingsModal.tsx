@@ -19,6 +19,8 @@ interface Props {
   target: number;
   selectTarget: (t: number) => void;
   onManagePhrases: () => void;
+  onImportDua: () => void;
+  onManageDuas: () => void;
   onClose: () => void;
 }
 
@@ -67,7 +69,7 @@ function LinkRow({ icon, bg, label, sub, onPress, last }: {
 export default function SettingsModal({
   visible, haptic, setHaptic, shake, setShake,
   target, selectTarget,
-  onManagePhrases, onClose,
+  onManagePhrases, onImportDua, onManageDuas, onClose,
 }: Props) {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -111,7 +113,14 @@ export default function SettingsModal({
             {/* Phrases */}
             <Text style={styles.sectionLabel}>Phrases</Text>
             <View style={styles.card}>
-              <LinkRow icon="۞" bg="#1A2A2A" label="Custom Phrases" sub="Add your own Arabic dhikr" onPress={onManagePhrases} last />
+              <LinkRow icon="۞" bg="#1A2A2A" label="Custom Phrases" sub="Add your own Arabic dhikr" onPress={onManagePhrases} />
+            </View>
+
+            {/* Duas */}
+            <Text style={styles.sectionLabel}>Duas</Text>
+            <View style={styles.card}>
+              <LinkRow icon="📖" bg="#1A3A2A" label="My Duas" sub="View and manage all duas" onPress={onManageDuas} />
+              <LinkRow icon="➕" bg="#2A3A1A" label="Import Dua" sub="Add custom duas from library" onPress={onImportDua} last />
             </View>
 
             {/* About */}

@@ -367,8 +367,6 @@ export default function DhikrScreen() {
         <SimpleDuaSelector
           duas={userDuas}
           selectedId={selectedDuaId}
-          onSelect={setSelectedDuaId}
-          onImportPress={() => setShowImportModal(true)}
           onLibraryPress={() => setShowDuaLibrary(true)}
         />
       </View>
@@ -490,6 +488,8 @@ export default function DhikrScreen() {
         target={target}
         selectTarget={selectTarget}
         onManagePhrases={() => { setShowSettings(false); setShowPhrases(true); }}
+        onImportDua={() => { setShowSettings(false); setShowImportModal(true); }}
+        onManageDuas={() => { setShowSettings(false); setShowDuaLibrary(true); }}
         onClose={() => setShowSettings(false)}
       />
       <PhrasesModal
