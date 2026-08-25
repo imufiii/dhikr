@@ -25,7 +25,6 @@ import HistoryModal from '../components/HistoryModal';
 import SettingsModal from '../components/SettingsModal';
 import PhrasesModal from '../components/PhrasesModal';
 import BarakahBudgetCard from '../components/BarakahBudgetCard';
-import NoorAd from '../components/NoorAd';
 import SimpleDuaSelector from '../components/SimpleDuaSelector';
 import ImportDuaModal from '../components/ImportDuaModal';
 import DuaLibrary from '../components/DuaLibrary';
@@ -461,13 +460,6 @@ export default function DhikrScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Sponsored slot — sits BELOW the worship ring and controls, never over
-            it. Self-hides when the network has no ad to show (NoorAd returns
-            null on no-fill), so the layout only grows when there's real,
-            human-vetted inventory. See the placement analysis in the PR notes. */}
-        <View style={styles.adSlot}>
-          <NoorAd />
-        </View>
       </View>
 
       <HistoryModal
@@ -648,10 +640,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     paddingHorizontal: 24,
-  },
-  adSlot: {
-    alignSelf: 'stretch',
-    marginTop: 4,
   },
   todayText: {
     fontSize: 10,
