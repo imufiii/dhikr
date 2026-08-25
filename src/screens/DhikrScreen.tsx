@@ -21,7 +21,6 @@ import { PHRASES, TARGETS } from '../constants/phrases';
 import { loadState, saveState, DhikrState, SessionRecord, CustomPhrase, todayString, DailyDuaRecord } from '../store/dhikrStore';
 import { useShakeDetector } from '../hooks/useShakeDetector';
 import { usePocketMode } from '../hooks/usePocketMode';
-import { useVolumeButton } from '../hooks/useVolumeButton';
 import HistoryModal from '../components/HistoryModal';
 import SettingsModal from '../components/SettingsModal';
 import PhrasesModal from '../components/PhrasesModal';
@@ -51,7 +50,6 @@ export default function DhikrScreen() {
   const [target, setTarget] = useState(33);
   const [haptic, setHaptic] = useState(true);
   const [shake, setShake] = useState(true);
-  const [volumeBtn, setVolumeBtn] = useState(true);
   const [history, setHistory] = useState<SessionRecord[]>([]);
   const [todayCount, setTodayCount] = useState(0);
   const [dailyTotals, setDailyTotals] = useState<Record<string, number>>({});
@@ -90,7 +88,6 @@ export default function DhikrScreen() {
       setTarget(s.target);
       setHaptic(s.haptic);
       setShake(s.shake ?? true);
-      setVolumeBtn(s.volumeBtn ?? true);
       setHistory(s.history);
       setTodayCount(s.todayCount ?? 0);
       setDailyTotals(s.dailyTotals ?? {});
@@ -130,8 +127,8 @@ export default function DhikrScreen() {
 
   useEffect(() => {
     if (!ready) return;
-    saveState({ phraseIndex, target, haptic, shake, volumeBtn, history, todayCount, lastDate: lastDateRef.current, dailyTotals, phraseTotals, customPhrases, budgetCardShown, userDuas });
-  }, [phraseIndex, target, haptic, shake, volumeBtn, history, todayCount, dailyTotals, phraseTotals, customPhrases, budgetCardShown, userDuas, ready]);
+    saveState({ phraseIndex, target, haptic, shake, history, todayCount, lastDate: lastDateRef.current, dailyTotals, phraseTotals, customPhrases, budgetCardShown, userDuas });
+  }, [phraseIndex, target, haptic, shake, history, todayCount, dailyTotals, phraseTotals, customPhrases, budgetCardShown, userDuas, ready]);
 
   useEffect(() => {
     const pct = target > 0 ? Math.min(count / target, 1) : 0;
@@ -311,7 +308,6 @@ export default function DhikrScreen() {
   }, [pocketModeExit, triggerHaptic, showBanner]);
   const { nextPrayer, locationDenied } = usePrayerTimes();
   useShakeDetector({ enabled: shake, onShake: increment });
-  useVolumeButton({ enabled: volumeBtn, onPress: increment });
 
   const strokeDashoffset = progressAnim.interpolate({
     inputRange: [0, 1],
@@ -491,8 +487,6 @@ export default function DhikrScreen() {
         setHaptic={setHaptic}
         shake={shake}
         setShake={setShake}
-        volumeBtn={volumeBtn}
-        setVolumeBtn={setVolumeBtn}
         target={target}
         selectTarget={selectTarget}
         onManagePhrases={() => { setShowSettings(false); setShowPhrases(true); }}

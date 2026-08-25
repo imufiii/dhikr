@@ -16,8 +16,6 @@ interface Props {
   setHaptic: (v: boolean) => void;
   shake: boolean;
   setShake: (v: boolean) => void;
-  volumeBtn: boolean;
-  setVolumeBtn: (v: boolean) => void;
   target: number;
   selectTarget: (t: number) => void;
   onManagePhrases: () => void;
@@ -68,7 +66,7 @@ function LinkRow({ icon, bg, label, sub, onPress, last }: {
 
 export default function SettingsModal({
   visible, haptic, setHaptic, shake, setShake,
-  volumeBtn, setVolumeBtn, target, selectTarget,
+  target, selectTarget,
   onManagePhrases, onClose,
 }: Props) {
   return (
@@ -84,17 +82,7 @@ export default function SettingsModal({
             <Text style={styles.sectionLabel}>Counter</Text>
             <View style={styles.card}>
               <SwitchRow icon="◎" bg="#1A3A2A" label="Haptic Feedback" sub="Vibrate on each count" value={haptic} onChange={setHaptic} />
-              <SwitchRow icon="⟲" bg="#1A2A3A" label="Shake to Count" sub="Shake phone to increment" value={shake} onChange={setShake} />
-              <View style={[styles.row, styles.rowLast]}>
-                <Icon symbol="◁" bg="#2A1A3A" />
-                <View style={styles.rowText}>
-                  <Text style={styles.label}>Volume Button</Text>
-                  <Text style={styles.sub}>Count with volume buttons</Text>
-                </View>
-                <Switch value={volumeBtn} onValueChange={setVolumeBtn}
-                  trackColor={{ false: colors.muted2, true: colors.gold }}
-                  thumbColor={colors.white} />
-              </View>
+              <SwitchRow icon="⟲" bg="#1A2A3A" label="Shake to Count" sub="Shake phone to increment" value={shake} onChange={setShake} last />
             </View>
 
             {/* Target */}

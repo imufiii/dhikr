@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
-  Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View,
+  Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
 import { colors, fonts } from '../constants/theme';
 import { UserDua } from '../constants/universalDuas';
@@ -15,9 +15,21 @@ interface Props {
 
 export default function DuaLibrary({ visible, duas, onEdit, onDelete, onClose }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const builtInDuas = duas.filter(d => d.isBuiltIn);
-  const customDuas = duas.filter(d => !d.isBuiltIn);
+  const filteredDuas = useMemo(() => {
+    if (!searchQuery.trim()) return duas;
+    const query = searchQuery.toLowerCase();
+    return duas.filter(d =>
+      d.arabicText.includes(query) ||
+      d.transliteration.toLowerCase().includes(query) ||
+      d.englishMeaning.toLowerCase().includes(query) ||
+      d.source.toLowerCase().includes(query)
+    );
+  }, [duas, searchQuery]);
+
+  const builtInDuas = filteredDuas.filter(d => d.isBuiltIn);
+  const customDuas = filteredDuas.filter(d => !d.isBuiltIn);
 
   const DuaItem = ({ dua, isCustom }: { dua: UserDua; isCustom: boolean }) => {
     const isExpanded = expandedId === dua.id;
@@ -79,6 +91,14 @@ export default function DuaLibrary({ visible, duas, onEdit, onDelete, onClose }:
           <View style={styles.handle} />
           <Text style={styles.title}>My Dua Library</Text>
           <Text style={styles.subtitle}>{duas.length} duas total</Text>
+
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search duas..."
+            placeholderTextColor={colors.muted}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
 
           <ScrollView style={styles.list} showsVerticalScrollIndicator={false} bounces={false}>
             {builtInDuas.length > 0 && (
@@ -148,10 +168,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.muted,
     fontFamily: fonts.ui,
-    marginBottom: 16,
+    marginBottom: 12,
+  },
+  searchInput: {
+    backgroundColor: colors.muted2,
+    borderWidth: 1,
+    borderColor: colors.goldDim,
+    color: colors.white,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 13,
+    fontFamily: fonts.ui,
+    marginBottom: 12,
   },
   list: {
-    maxHeight: 500,
+    maxHeight: 480,
   },
   sectionLabel: {
     fontSize: 11,
