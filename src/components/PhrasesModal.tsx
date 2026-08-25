@@ -36,7 +36,7 @@ export default function PhrasesModal({ visible, customPhrases, onAdd, onDelete, 
       <Pressable style={styles.overlay} onPress={onClose}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 32}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 32}
           style={styles.sheet}
         >
           <View style={styles.handle} />
