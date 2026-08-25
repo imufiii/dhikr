@@ -90,22 +90,26 @@ export default function DuaLibrary({ visible, duas, onEdit, onDelete, onClose }:
       <Pressable style={styles.overlay} onPress={onClose}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 32}
-          style={styles.sheet}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+          style={{ flex: 1, justifyContent: 'flex-end' }}
         >
-          <View style={styles.handle} />
-          <Text style={styles.title}>My Dua Library</Text>
-          <Text style={styles.subtitle}>{duas.length} duas total</Text>
+          <View style={styles.sheet}>
+            <View style={styles.handle} />
+            <Text style={styles.title}>My Dua Library</Text>
+            <Text style={styles.subtitle}>{duas.length} duas total</Text>
 
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search duas..."
-            placeholderTextColor={colors.muted}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search duas..."
+              placeholderTextColor={colors.muted}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              returnKeyType="done"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
 
-          <ScrollView style={styles.list} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} bounces={false}>
+            <ScrollView style={styles.list} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} bounces={false}>
             {builtInDuas.length > 0 && (
               <>
                 <Text style={styles.sectionLabel}>Built-in Duas</Text>
@@ -131,7 +135,8 @@ export default function DuaLibrary({ visible, duas, onEdit, onDelete, onClose }:
             {duas.length === 0 && (
               <Text style={styles.empty}>No duas yet. Add your first one!</Text>
             )}
-          </ScrollView>
+            </ScrollView>
+          </View>
         </KeyboardAvoidingView>
       </Pressable>
     </Modal>
@@ -145,6 +150,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   sheet: {
+    flex: 1,
     backgroundColor: '#162032',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
@@ -188,7 +194,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   list: {
-    maxHeight: 480,
+    flex: 1,
   },
   sectionLabel: {
     fontSize: 11,
