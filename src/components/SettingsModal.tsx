@@ -32,12 +32,12 @@ function Icon({ symbol, bg }: { symbol: string; bg: string }) {
   );
 }
 
-function SwitchRow({ icon, bg, label, sub, value, onChange }: {
+function SwitchRow({ icon, bg, label, sub, value, onChange, last }: {
   icon: string; bg: string; label: string; sub: string;
-  value: boolean; onChange: (v: boolean) => void;
+  value: boolean; onChange: (v: boolean) => void; last?: boolean;
 }) {
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, last && styles.rowLast]}>
       <Icon symbol={icon} bg={bg} />
       <View style={styles.rowText}>
         <Text style={styles.label}>{label}</Text>

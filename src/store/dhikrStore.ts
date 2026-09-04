@@ -30,7 +30,6 @@ export interface DhikrState {
   target: number;
   haptic: boolean;
   shake: boolean;
-  volumeBtn: boolean;
   history: SessionRecord[];
   todayCount: number;
   lastDate: string;
@@ -50,7 +49,6 @@ const defaults: DhikrState = {
   target: 33,
   haptic: true,
   shake: true,
-  volumeBtn: true,
   history: [],
   todayCount: 0,
   lastDate: '',

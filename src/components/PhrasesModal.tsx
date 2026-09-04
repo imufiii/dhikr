@@ -70,7 +70,6 @@ export default function PhrasesModal({ visible, customPhrases, onAdd, onDelete, 
               value={ar}
               onChangeText={setAr}
               textAlign="right"
-              writingDirection="rtl"
               autoCorrect={false}
             />
             <TextInput
