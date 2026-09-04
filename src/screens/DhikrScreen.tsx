@@ -370,6 +370,7 @@ export default function DhikrScreen() {
         <SimpleDuaSelector
           duas={userDuas}
           selectedId={selectedDuaId}
+          onSelect={setSelectedDuaId}
           onLibraryPress={() => setShowDuaLibrary(true)}
         />
       </View>
