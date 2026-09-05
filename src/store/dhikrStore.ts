@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { UserDua } from '../constants/universalDuas';
+import { RoutineItem } from '../constants/routine';
 
 export interface SessionRecord {
   phraseRo: string;
@@ -43,6 +44,8 @@ export interface DhikrState {
   removedBuiltInDuaIds?: string[];
   routineDate?: string;
   routineDone?: string[];
+  routineDisabled?: string[];
+  routineCustom?: RoutineItem[];
 }
 
 const KEY = 'dhikr_state_v2';

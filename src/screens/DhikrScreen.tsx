@@ -30,6 +30,7 @@ import DuaLibrary from '../components/DuaLibrary';
 import MyDayModal from '../components/MyDayModal';
 import { usePrayerTimes } from '../hooks/usePrayerTimes';
 import { UNIVERSAL_DUAS, UserDua } from '../constants/universalDuas';
+import { RoutineItem } from '../constants/routine';
 
 const { width } = Dimensions.get('window');
 const RING_SIZE = Math.min(width * 0.72, 340);
@@ -68,6 +69,8 @@ export default function DhikrScreen() {
   const [editingDua, setEditingDua] = useState<UserDua | null>(null);
   const [showMyDay, setShowMyDay] = useState(false);
   const [routineDone, setRoutineDone] = useState<string[]>([]);
+  const [routineDisabled, setRoutineDisabled] = useState<string[]>([]);
+  const [routineCustom, setRoutineCustom] = useState<RoutineItem[]>([]);
 
   const sessionStart = useRef(Date.now());
   const lastDateRef = useRef('');
@@ -103,6 +106,8 @@ export default function DhikrScreen() {
       setRemovedBuiltInDuaIds(removedIds);
       // Routine check-offs are per-day; keep them only if they're from today.
       setRoutineDone(s.routineDate === todayString() ? (s.routineDone ?? []) : []);
+      setRoutineDisabled(s.routineDisabled ?? []);
+      setRoutineCustom(s.routineCustom ?? []);
       if (s.userDuas && s.userDuas.length > 0) {
         // Built-in dua metadata (titles, wording) always comes from code so it
         // stays current; only the user's own custom duas persist from storage.
@@ -140,8 +145,8 @@ export default function DhikrScreen() {
 
   useEffect(() => {
     if (!ready) return;
-    saveState({ phraseIndex, target, haptic, shake, history, todayCount, lastDate: lastDateRef.current, dailyTotals, phraseTotals, customPhrases, budgetCardShown, userDuas, removedBuiltInDuaIds, routineDate: todayString(), routineDone });
-  }, [phraseIndex, target, haptic, shake, history, todayCount, dailyTotals, phraseTotals, customPhrases, budgetCardShown, userDuas, removedBuiltInDuaIds, routineDone, ready]);
+    saveState({ phraseIndex, target, haptic, shake, history, todayCount, lastDate: lastDateRef.current, dailyTotals, phraseTotals, customPhrases, budgetCardShown, userDuas, removedBuiltInDuaIds, routineDate: todayString(), routineDone, routineDisabled, routineCustom });
+  }, [phraseIndex, target, haptic, shake, history, todayCount, dailyTotals, phraseTotals, customPhrases, budgetCardShown, userDuas, removedBuiltInDuaIds, routineDone, routineDisabled, routineCustom, ready]);
 
   useEffect(() => {
     const pct = target > 0 ? Math.min(count / target, 1) : 0;
@@ -319,6 +324,19 @@ export default function DhikrScreen() {
 
   const toggleRoutineItem = useCallback((id: string) => {
     setRoutineDone(d => d.includes(id) ? d.filter(x => x !== id) : [...d, id]);
+  }, []);
+
+  const toggleRoutineEnabled = useCallback((id: string) => {
+    setRoutineDisabled(d => d.includes(id) ? d.filter(x => x !== id) : [...d, id]);
+  }, []);
+
+  const addRoutineItem = useCallback((item: RoutineItem) => {
+    setRoutineCustom(c => [...c, item]);
+  }, []);
+
+  const removeRoutineCustom = useCallback((id: string) => {
+    setRoutineCustom(c => c.filter(x => x.id !== id));
+    setRoutineDone(d => d.filter(x => x !== id));
   }, []);
 
   // Bring back any removed built-in duas (non-destructive — keeps custom duas).
@@ -580,7 +598,12 @@ export default function DhikrScreen() {
       <MyDayModal
         visible={showMyDay}
         doneIds={routineDone}
+        disabledIds={routineDisabled}
+        customItems={routineCustom}
         onToggle={toggleRoutineItem}
+        onToggleEnabled={toggleRoutineEnabled}
+        onAddItem={addRoutineItem}
+        onRemoveCustom={removeRoutineCustom}
         onClose={() => setShowMyDay(false)}
       />
     </SafeAreaView>
