@@ -20,7 +20,7 @@ export const UNIVERSAL_DUAS: UserDua[] = [
     transliteration: "Alhamdulillahil-ladhi ahyana ba'da ma amatana wa ilayhin-nushur",
     englishMeaning: 'All praise is for Allah who gave us life after He caused us to die, and to Him is the resurrection.',
     source: 'Sahih al-Bukhari',
-    category: 'Sleep',
+    category: 'Morning & Evening',
     isBuiltIn: true,
   },
   {
@@ -159,7 +159,7 @@ export const UNIVERSAL_DUAS: UserDua[] = [
     arabicText: 'تَبَارَكَ الَّذِي بِيَدِهِ الْمُلْكُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ',
     transliteration: "Tabarakal-ladhi biyadihil-mulk, wa huwa 'ala kulli shay'in qadir",
     englishMeaning: 'Blessed is He in whose hand is the dominion, and He is over all things competent. Reminder: reciting Surah Al-Mulk each night is a means of protection.',
-    source: 'Jami’ at-Tirmidhi (virtue of Al-Mulk)',
+    source: 'Qur’an 67:1 · virtue in Jami’ at-Tirmidhi (hasan)',
     category: 'Sleep',
     isBuiltIn: true,
   },
