@@ -8,13 +8,15 @@ import { UserDua } from '../constants/universalDuas';
 interface Props {
   visible: boolean;
   duas: UserDua[];
+  removedCount: number;
   onAddPress: () => void;
   onEdit: (dua: UserDua) => void;
   onDelete: (id: string) => void;
+  onRestoreBuiltIns: () => void;
   onClose: () => void;
 }
 
-export default function DuaLibrary({ visible, duas, onAddPress, onEdit, onDelete, onClose }: Props) {
+export default function DuaLibrary({ visible, duas, removedCount, onAddPress, onEdit, onDelete, onRestoreBuiltIns, onClose }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -144,6 +146,14 @@ export default function DuaLibrary({ visible, duas, onAddPress, onEdit, onDelete
 
             {duas.length === 0 && (
               <Text style={styles.empty}>No duas yet. Add your first one!</Text>
+            )}
+
+            {removedCount > 0 && (
+              <TouchableOpacity style={styles.restoreBtn} onPress={onRestoreBuiltIns} activeOpacity={0.7}>
+                <Text style={styles.restoreBtnText}>
+                  ↺ Restore built-in duas ({removedCount})
+                </Text>
+              </TouchableOpacity>
             )}
             </ScrollView>
           </View>
@@ -324,5 +334,19 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingVertical: 32,
     fontFamily: fonts.ui,
+  },
+  restoreBtn: {
+    borderWidth: 1,
+    borderColor: colors.goldDim,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  restoreBtnText: {
+    fontSize: 12.5,
+    color: colors.gold,
+    fontFamily: fonts.uiBold,
   },
 });

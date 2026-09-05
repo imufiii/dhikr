@@ -311,6 +311,15 @@ export default function DhikrScreen() {
     }
   }, [selectedDuaId, userDuas]);
 
+  // Bring back any removed built-in duas (non-destructive — keeps custom duas).
+  const handleRestoreBuiltIns = useCallback(() => {
+    setUserDuas(current => {
+      const customDuas = current.filter(d => !d.isBuiltIn);
+      return [...UNIVERSAL_DUAS, ...customDuas];
+    });
+    setRemovedBuiltInDuaIds([]);
+  }, []);
+
   const selectTarget = useCallback((t: number) => {
     setTarget(t);
     setCount(0);
@@ -542,9 +551,11 @@ export default function DhikrScreen() {
       <DuaLibrary
         visible={showDuaLibrary}
         duas={userDuas}
+        removedCount={removedBuiltInDuaIds.length}
         onAddPress={handleAddPress}
         onEdit={handleEditDua}
         onDelete={handleDeleteDua}
+        onRestoreBuiltIns={handleRestoreBuiltIns}
         onClose={() => setShowDuaLibrary(false)}
       />
     </SafeAreaView>
