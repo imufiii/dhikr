@@ -4,6 +4,7 @@ import {
 } from 'react-native';
 import { colors, fonts } from '../constants/theme';
 import { UserDua } from '../constants/universalDuas';
+import DuaIcon from './DuaIcon';
 
 interface Props {
   visible: boolean;
@@ -16,21 +17,21 @@ interface Props {
   onClose: () => void;
 }
 
-// Collection display: an emoji face + a friendly label per category.
+// Collection display: a gold line-icon + a friendly label per category.
 const CATEGORY_META: Record<string, { label: string; icon: string }> = {
-  'Morning & Evening': { label: 'Morning & Evening', icon: '🌅' },
-  'Prayer':            { label: 'Prayer',            icon: '🕌' },
-  'Sleep':             { label: 'Sleep',             icon: '🌙' },
-  'Purification':      { label: 'Purification',      icon: '💧' },
-  'Daily':             { label: 'Daily Life',        icon: '🏠' },
-  'Forgiveness':       { label: 'Forgiveness',       icon: '🤲' },
-  'Reliance':          { label: 'Reliance',          icon: '🕊️' },
-  'Distress':          { label: 'Distress',          icon: '💛' },
+  'Morning & Evening': { label: 'Morning & Evening', icon: 'morning' },
+  'Prayer':            { label: 'Prayer',            icon: 'prayer' },
+  'Sleep':             { label: 'Sleep',             icon: 'sleep' },
+  'Purification':      { label: 'Purification',      icon: 'purification' },
+  'Daily':             { label: 'Daily Life',        icon: 'daily' },
+  'Forgiveness':       { label: 'Forgiveness',       icon: 'forgiveness' },
+  'Reliance':          { label: 'Reliance',          icon: 'reliance' },
+  'Distress':          { label: 'Distress',          icon: 'distress' },
 };
 const CATEGORY_ORDER = Object.keys(CATEGORY_META);
 
 function meta(category: string) {
-  return CATEGORY_META[category] || { label: category || 'Custom', icon: '📿' };
+  return CATEGORY_META[category] || { label: category || 'Custom', icon: 'sparkle' };
 }
 
 function arabicSnippet(text: string) {
@@ -44,11 +45,11 @@ function pickFeatured(duas: UserDua[]): { dua: UserDua; label: string; icon: str
   if (duas.length === 0) return null;
   const hour = new Date().getHours();
   let candidates: string[]; let label: string; let icon: string;
-  if (hour >= 4 && hour < 11)       { candidates = ['dua_morning'];                              label = 'For this morning'; icon = '🌅'; }
-  else if (hour >= 11 && hour < 16) { candidates = ['dua_istighfar', 'universal_1'];             label = 'This afternoon';   icon = '☀️'; }
-  else if (hour >= 16 && hour < 19) { candidates = ['dua_evening'];                              label = 'This evening';     icon = '🌇'; }
-  else if (hour >= 19 && hour < 22) { candidates = ['dua_istighfar', 'dua_evening'];             label = 'After Maghrib';    icon = '🌆'; }
-  else                              { candidates = ['dua_mulk', 'universal_1_sleep', 'dua_night_waking']; label = 'Before sleep'; icon = '🌙'; }
+  if (hour >= 4 && hour < 11)       { candidates = ['dua_morning'];                              label = 'For this morning'; icon = 'morning'; }
+  else if (hour >= 11 && hour < 16) { candidates = ['dua_istighfar', 'universal_1'];             label = 'This afternoon';   icon = 'sun'; }
+  else if (hour >= 16 && hour < 19) { candidates = ['dua_evening'];                              label = 'This evening';     icon = 'sun'; }
+  else if (hour >= 19 && hour < 22) { candidates = ['dua_istighfar', 'dua_evening'];             label = 'After Maghrib';    icon = 'sun'; }
+  else                              { candidates = ['dua_mulk', 'universal_1_sleep', 'dua_night_waking']; label = 'Before sleep'; icon = 'sleep'; }
 
   let dua: UserDua | undefined;
   for (const id of candidates) { dua = duas.find(d => d.id === id); if (dua) break; }
@@ -100,7 +101,7 @@ export default function DuaLibrary({ visible, duas, removedCount, onAddPress, on
           onPress={() => setExpandedId(isExpanded ? null : dua.id)}
           activeOpacity={0.7}
         >
-          <View style={styles.iconChip}><Text style={styles.iconEmoji}>{icon}</Text></View>
+          <View style={styles.iconChip}><DuaIcon name={icon} size={18} /></View>
           <View style={styles.rowMid}>
             <Text style={styles.rowTitle} numberOfLines={1}>{dua.title || dua.source}</Text>
             {!!dua.englishMeaning && (
@@ -142,7 +143,7 @@ export default function DuaLibrary({ visible, duas, removedCount, onAddPress, on
         onPress={() => setCollection(value)}
         activeOpacity={0.7}
       >
-        {!!icon && <Text style={styles.chipIcon}>{icon}</Text>}
+        {!!icon && <DuaIcon name={icon} size={14} color={active ? colors.bg : colors.gold} />}
         <Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text>
         <Text style={[styles.chipCount, active && styles.chipCountActive]}>{count}</Text>
       </TouchableOpacity>
@@ -207,7 +208,10 @@ export default function DuaLibrary({ visible, duas, removedCount, onAddPress, on
                   activeOpacity={0.85}
                   onPress={() => setFeatureOpen(o => !o)}
                 >
-                  <Text style={styles.feEyebrow}>{featured.icon}  {featured.label.toUpperCase()}</Text>
+                  <View style={styles.feEyebrowRow}>
+                    <DuaIcon name={featured.icon} size={14} />
+                    <Text style={styles.feEyebrow}>{featured.label.toUpperCase()}</Text>
+                  </View>
                   <Text style={styles.feArabic} numberOfLines={featureOpen ? undefined : 2}>
                     {featured.dua.arabicText}
                   </Text>
@@ -292,7 +296,6 @@ const styles = StyleSheet.create({
     borderRadius: 20, paddingVertical: 7, paddingHorizontal: 12,
   },
   chipActive: { backgroundColor: colors.gold, borderColor: colors.gold },
-  chipIcon: { fontSize: 13 },
   chipText: { fontSize: 12.5, color: colors.white, fontFamily: fonts.uiBold },
   chipTextActive: { color: colors.bg },
   chipCount: { fontSize: 11, color: colors.muted, fontFamily: fonts.ui },
@@ -306,8 +309,9 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(201,168,76,0.32)',
     borderRadius: 18, padding: 16, marginBottom: 4,
   },
+  feEyebrowRow: { flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 10 },
   feEyebrow: {
-    fontSize: 10.5, letterSpacing: 1, color: colors.gold, fontFamily: fonts.uiBold, marginBottom: 10,
+    fontSize: 10.5, letterSpacing: 1, color: colors.gold, fontFamily: fonts.uiBold,
   },
   feArabic: {
     fontSize: 19, color: colors.gold, fontFamily: fonts.arabic, textAlign: 'right', lineHeight: 32,
@@ -341,7 +345,6 @@ const styles = StyleSheet.create({
     width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(201,168,76,0.12)',
     alignItems: 'center', justifyContent: 'center',
   },
-  iconEmoji: { fontSize: 18 },
   rowMid: { flex: 1, minWidth: 0 },
   rowTitle: { fontSize: 14.5, color: colors.white, fontFamily: fonts.uiBold },
   rowMeaning: { fontSize: 11.5, color: colors.muted, fontFamily: fonts.ui, marginTop: 2 },
