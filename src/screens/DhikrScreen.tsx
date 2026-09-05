@@ -32,6 +32,7 @@ import { usePrayerTimes } from '../hooks/usePrayerTimes';
 import { UNIVERSAL_DUAS, UserDua } from '../constants/universalDuas';
 import { RoutineItem } from '../constants/routine';
 import { enableReminders, disableReminders } from '../utils/reminders';
+import NavIcon from '../components/NavIcon';
 
 const { width } = Dimensions.get('window');
 const RING_SIZE = Math.min(width * 0.72, 340);
@@ -507,44 +508,48 @@ export default function DhikrScreen() {
           ))}
         </View>
 
-        <View style={styles.actions}>
-          <View style={styles.sideLeft}>
-            {showDuasBtn && (
-              <TouchableOpacity style={styles.actionBtn} onPress={() => setShowDuaLibrary(true)}>
-                <Text style={styles.actionIcon}>📖</Text>
-                <Text style={styles.actionLabel}>Duas</Text>
-              </TouchableOpacity>
-            )}
-            {showMyDayBtn && (
-              <TouchableOpacity style={styles.actionBtn} onPress={() => setShowMyDay(true)}>
-                <Text style={styles.actionIcon}>🗓</Text>
-                <Text style={styles.actionLabel}>My Day</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+        {/* Counter actions — Reset & Pocket live with the counter, not the nav */}
+        <View style={styles.counterActions}>
+          <TouchableOpacity style={styles.actionPill} onPress={reset} activeOpacity={0.7}>
+            <NavIcon name="reset" size={15} color={colors.muted} />
+            <Text style={styles.actionPillText}>Reset</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionPill, pocketMode && styles.actionPillActive]}
+            onPress={pocketMode ? exitPocketMode : enterPocketMode}
+            onLongPress={exitPocketMode}
+            delayLongPress={800}
+            activeOpacity={0.7}
+          >
+            <NavIcon name="pocket" size={15} color={pocketMode ? colors.bg : colors.gold} />
+            <Text style={[styles.actionPillText, pocketMode && styles.actionPillTextActive]}>
+              {pocketMode ? 'Exit pocket' : 'Pocket'}
+            </Text>
+          </TouchableOpacity>
+        </View>
 
-          <View style={styles.centerBtns}>
-            <TouchableOpacity style={styles.resetBtn} onPress={reset}>
-              <Text style={styles.resetIcon}>↺</Text>
+        {/* Bottom tab bar — navigation only, evenly spaced */}
+        <View style={styles.tabBar}>
+          <TouchableOpacity style={styles.tab} onPress={() => { setShowDuaLibrary(false); setShowMyDay(false); setShowSettings(false); }} activeOpacity={0.7}>
+            <NavIcon name="counter" size={22} color={colors.gold} />
+            <Text style={[styles.tabLabel, styles.tabLabelActive]}>Counter</Text>
+          </TouchableOpacity>
+          {showDuasBtn && (
+            <TouchableOpacity style={styles.tab} onPress={() => setShowDuaLibrary(true)} activeOpacity={0.7}>
+              <NavIcon name="duas" size={22} color={colors.muted} />
+              <Text style={styles.tabLabel}>Duas</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.pocketBtn, pocketMode && styles.pocketBtnActive]}
-              onPress={pocketMode ? exitPocketMode : enterPocketMode}
-              onLongPress={exitPocketMode}
-              delayLongPress={800}
-            >
-              <Text style={[styles.pocketLabel, pocketMode && styles.pocketLabelActive]}>
-                {pocketMode ? '👆 Exit' : '🤐 Pocket'}
-              </Text>
+          )}
+          {showMyDayBtn && (
+            <TouchableOpacity style={styles.tab} onPress={() => setShowMyDay(true)} activeOpacity={0.7}>
+              <NavIcon name="myday" size={22} color={colors.muted} />
+              <Text style={styles.tabLabel}>My Day</Text>
             </TouchableOpacity>
-          </View>
-
-          <View style={styles.sideRight}>
-            <TouchableOpacity style={styles.actionBtn} onPress={() => setShowSettings(true)}>
-              <Text style={styles.actionIcon}>⚙️</Text>
-              <Text style={styles.actionLabel}>Settings</Text>
-            </TouchableOpacity>
-          </View>
+          )}
+          <TouchableOpacity style={styles.tab} onPress={() => setShowSettings(true)} activeOpacity={0.7}>
+            <NavIcon name="settings" size={22} color={colors.muted} />
+            <Text style={styles.tabLabel}>Settings</Text>
+          </TouchableOpacity>
         </View>
 
       </View>
@@ -779,76 +784,58 @@ const styles = StyleSheet.create({
   pillTextActive: {
     color: colors.gold,
   },
-  actions: {
+  counterActions: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
+    marginTop: 2,
+    marginBottom: 4,
+  },
+  actionPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: '100%',
-  },
-  sideLeft: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 22,
-  },
-  sideRight: {
-    flex: 1,
-    alignItems: 'flex-end',
-  },
-  actionBtn: {
-    alignItems: 'center',
-    gap: 4,
-    minHeight: 48,
-    justifyContent: 'center',
-  },
-  actionIcon: {
-    fontSize: 22,
-  },
-  actionLabel: {
-    fontSize: 10,
-    color: colors.muted,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    fontFamily: fonts.ui,
-  },
-  centerBtns: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 6,
-  },
-  resetBtn: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.muted2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  resetIcon: {
-    fontSize: 24,
-    color: colors.muted,
-  },
-  pocketBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 14,
+    gap: 7,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 22,
     backgroundColor: colors.muted2,
     borderWidth: 1,
     borderColor: 'transparent',
   },
-  pocketBtnActive: {
+  actionPillActive: {
     backgroundColor: colors.gold,
-    borderColor: colors.white,
   },
-  pocketLabel: {
+  actionPillText: {
+    fontSize: 12.5,
+    color: colors.muted,
+    fontFamily: fonts.uiBold,
+  },
+  actionPillTextActive: {
+    color: colors.bg,
+  },
+  tabBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.06)',
+    paddingTop: 10,
+  },
+  tab: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 2,
+  },
+  tabLabel: {
     fontSize: 10,
     color: colors.muted,
     letterSpacing: 0.5,
-    fontFamily: fonts.uiBold,
+    fontFamily: fonts.ui,
   },
-  pocketLabelActive: {
-    color: colors.bg,
+  tabLabelActive: {
+    color: colors.gold,
+    fontFamily: fonts.uiBold,
   },
   pocketOverlay: {
     ...StyleSheet.absoluteFill,
