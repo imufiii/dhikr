@@ -46,6 +46,9 @@ export interface DhikrState {
   routineDone?: string[];
   routineDisabled?: string[];
   routineCustom?: RoutineItem[];
+  showDuasBtn?: boolean;
+  showMyDayBtn?: boolean;
+  remindersEnabled?: boolean;
 }
 
 const KEY = 'dhikr_state_v2';

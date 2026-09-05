@@ -18,6 +18,12 @@ interface Props {
   setShake: (v: boolean) => void;
   target: number;
   selectTarget: (t: number) => void;
+  showDuasBtn: boolean;
+  setShowDuasBtn: (v: boolean) => void;
+  showMyDayBtn: boolean;
+  setShowMyDayBtn: (v: boolean) => void;
+  remindersEnabled: boolean;
+  setRemindersEnabled: (v: boolean) => void;
   onManagePhrases: () => void;
   onHistory: () => void;
   onClose: () => void;
@@ -68,6 +74,8 @@ function LinkRow({ icon, bg, label, sub, onPress, last }: {
 export default function SettingsModal({
   visible, haptic, setHaptic, shake, setShake,
   target, selectTarget,
+  showDuasBtn, setShowDuasBtn, showMyDayBtn, setShowMyDayBtn,
+  remindersEnabled, setRemindersEnabled,
   onManagePhrases, onHistory, onClose,
 }: Props) {
   return (
@@ -84,6 +92,19 @@ export default function SettingsModal({
             <View style={styles.card}>
               <SwitchRow icon="◎" bg="#1A3A2A" label="Haptic Feedback" sub="Vibrate on each count" value={haptic} onChange={setHaptic} />
               <SwitchRow icon="⟲" bg="#1A2A3A" label="Shake to Count" sub="Shake phone to increment" value={shake} onChange={setShake} last />
+            </View>
+
+            {/* Home screen */}
+            <Text style={styles.sectionLabel}>Home screen</Text>
+            <View style={styles.card}>
+              <SwitchRow icon="📖" bg="#1A3A2A" label="Show Duas button" sub="A dua library on the home screen" value={showDuasBtn} onChange={setShowDuasBtn} />
+              <SwitchRow icon="🗓" bg="#2A2A1A" label="Show My Day button" sub="A daily worship routine" value={showMyDayBtn} onChange={setShowMyDayBtn} last />
+            </View>
+
+            {/* Reminders */}
+            <Text style={styles.sectionLabel}>Reminders</Text>
+            <View style={styles.card}>
+              <SwitchRow icon="⏰" bg="#1A2A3A" label="Daily reminders" sub="Gentle nudges for morning, evening & before sleep" value={remindersEnabled} onChange={setRemindersEnabled} last />
             </View>
 
             {/* Target */}

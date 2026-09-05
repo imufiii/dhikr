@@ -31,6 +31,7 @@ import MyDayModal from '../components/MyDayModal';
 import { usePrayerTimes } from '../hooks/usePrayerTimes';
 import { UNIVERSAL_DUAS, UserDua } from '../constants/universalDuas';
 import { RoutineItem } from '../constants/routine';
+import { enableReminders, disableReminders } from '../utils/reminders';
 
 const { width } = Dimensions.get('window');
 const RING_SIZE = Math.min(width * 0.72, 340);
@@ -71,6 +72,9 @@ export default function DhikrScreen() {
   const [routineDone, setRoutineDone] = useState<string[]>([]);
   const [routineDisabled, setRoutineDisabled] = useState<string[]>([]);
   const [routineCustom, setRoutineCustom] = useState<RoutineItem[]>([]);
+  const [showDuasBtn, setShowDuasBtn] = useState(true);
+  const [showMyDayBtn, setShowMyDayBtn] = useState(true);
+  const [remindersEnabled, setRemindersEnabled] = useState(false);
 
   const sessionStart = useRef(Date.now());
   const lastDateRef = useRef('');
@@ -108,6 +112,9 @@ export default function DhikrScreen() {
       setRoutineDone(s.routineDate === todayString() ? (s.routineDone ?? []) : []);
       setRoutineDisabled(s.routineDisabled ?? []);
       setRoutineCustom(s.routineCustom ?? []);
+      setShowDuasBtn(s.showDuasBtn ?? true);
+      setShowMyDayBtn(s.showMyDayBtn ?? true);
+      setRemindersEnabled(s.remindersEnabled ?? false);
       if (s.userDuas && s.userDuas.length > 0) {
         // Built-in dua metadata (titles, wording) always comes from code so it
         // stays current; only the user's own custom duas persist from storage.
@@ -145,8 +152,8 @@ export default function DhikrScreen() {
 
   useEffect(() => {
     if (!ready) return;
-    saveState({ phraseIndex, target, haptic, shake, history, todayCount, lastDate: lastDateRef.current, dailyTotals, phraseTotals, customPhrases, budgetCardShown, userDuas, removedBuiltInDuaIds, routineDate: todayString(), routineDone, routineDisabled, routineCustom });
-  }, [phraseIndex, target, haptic, shake, history, todayCount, dailyTotals, phraseTotals, customPhrases, budgetCardShown, userDuas, removedBuiltInDuaIds, routineDone, routineDisabled, routineCustom, ready]);
+    saveState({ phraseIndex, target, haptic, shake, history, todayCount, lastDate: lastDateRef.current, dailyTotals, phraseTotals, customPhrases, budgetCardShown, userDuas, removedBuiltInDuaIds, routineDate: todayString(), routineDone, routineDisabled, routineCustom, showDuasBtn, showMyDayBtn, remindersEnabled });
+  }, [phraseIndex, target, haptic, shake, history, todayCount, dailyTotals, phraseTotals, customPhrases, budgetCardShown, userDuas, removedBuiltInDuaIds, routineDone, routineDisabled, routineCustom, showDuasBtn, showMyDayBtn, remindersEnabled, ready]);
 
   useEffect(() => {
     const pct = target > 0 ? Math.min(count / target, 1) : 0;
@@ -339,6 +346,16 @@ export default function DhikrScreen() {
     setRoutineDone(d => d.filter(x => x !== id));
   }, []);
 
+  const handleReminders = useCallback((v: boolean) => {
+    if (v) {
+      setRemindersEnabled(true);
+      enableReminders().then(granted => { if (!granted) setRemindersEnabled(false); });
+    } else {
+      setRemindersEnabled(false);
+      disableReminders();
+    }
+  }, []);
+
   // Bring back any removed built-in duas (non-destructive — keeps custom duas).
   const handleRestoreBuiltIns = useCallback(() => {
     setUserDuas(current => {
@@ -492,14 +509,18 @@ export default function DhikrScreen() {
 
         <View style={styles.actions}>
           <View style={styles.sideLeft}>
-            <TouchableOpacity style={styles.actionBtn} onPress={() => setShowDuaLibrary(true)}>
-              <Text style={styles.actionIcon}>📖</Text>
-              <Text style={styles.actionLabel}>Duas</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionBtn} onPress={() => setShowMyDay(true)}>
-              <Text style={styles.actionIcon}>🗓</Text>
-              <Text style={styles.actionLabel}>My Day</Text>
-            </TouchableOpacity>
+            {showDuasBtn && (
+              <TouchableOpacity style={styles.actionBtn} onPress={() => setShowDuaLibrary(true)}>
+                <Text style={styles.actionIcon}>📖</Text>
+                <Text style={styles.actionLabel}>Duas</Text>
+              </TouchableOpacity>
+            )}
+            {showMyDayBtn && (
+              <TouchableOpacity style={styles.actionBtn} onPress={() => setShowMyDay(true)}>
+                <Text style={styles.actionIcon}>🗓</Text>
+                <Text style={styles.actionLabel}>My Day</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           <View style={styles.centerBtns}>
@@ -545,6 +566,12 @@ export default function DhikrScreen() {
         setShake={setShake}
         target={target}
         selectTarget={selectTarget}
+        showDuasBtn={showDuasBtn}
+        setShowDuasBtn={setShowDuasBtn}
+        showMyDayBtn={showMyDayBtn}
+        setShowMyDayBtn={setShowMyDayBtn}
+        remindersEnabled={remindersEnabled}
+        setRemindersEnabled={handleReminders}
         onManagePhrases={() => { setShowSettings(false); setShowPhrases(true); }}
         onHistory={() => { setShowSettings(false); setShowHistory(true); }}
         onClose={() => setShowSettings(false)}
