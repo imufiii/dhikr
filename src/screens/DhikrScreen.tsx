@@ -25,7 +25,6 @@ import HistoryModal from '../components/HistoryModal';
 import SettingsModal from '../components/SettingsModal';
 import PhrasesModal from '../components/PhrasesModal';
 import BarakahBudgetCard from '../components/BarakahBudgetCard';
-import SimpleDuaSelector from '../components/SimpleDuaSelector';
 import ImportDuaModal from '../components/ImportDuaModal';
 import DuaLibrary from '../components/DuaLibrary';
 import { usePrayerTimes } from '../hooks/usePrayerTimes';
@@ -392,14 +391,6 @@ export default function DhikrScreen() {
         </Text>
       )}
 
-      <View style={styles.duaCardContainer}>
-        <SimpleDuaSelector
-          duas={userDuas}
-          selectedId={selectedDuaId}
-          onSelect={setSelectedDuaId}
-        />
-      </View>
-
       <Pressable
         style={[styles.ring, { width: RING_SIZE, height: RING_SIZE }]}
         onPress={increment}
@@ -600,10 +591,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     paddingVertical: 8,
     gap: 4,
-  },
-  duaCardContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
   },
   arabicText: {
     fontSize: 28,
