@@ -64,6 +64,7 @@ export default function DhikrScreen() {
   const [selectedDuaId, setSelectedDuaId] = useState<string | null>(UNIVERSAL_DUAS[0].id);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showDuaLibrary, setShowDuaLibrary] = useState(false);
+  const [editingDua, setEditingDua] = useState<UserDua | null>(null);
 
   const sessionStart = useRef(Date.now());
   const lastDateRef = useRef('');
@@ -271,13 +272,25 @@ export default function DhikrScreen() {
     })
   ).current;
 
-  const handleAddDua = useCallback((dua: UserDua) => {
-    setUserDuas(d => [...d, dua]);
+  // Upsert: replace when the id already exists (edit), otherwise append (add).
+  const handleSaveDua = useCallback((dua: UserDua) => {
+    setUserDuas(d => d.some(x => x.id === dua.id)
+      ? d.map(x => x.id === dua.id ? dua : x)
+      : [...d, dua]);
     setShowImportModal(false);
+    setEditingDua(null);
   }, []);
 
   const handleEditDua = useCallback((dua: UserDua) => {
-    setUserDuas(d => d.map(x => x.id === dua.id ? dua : x));
+    setEditingDua(dua);
+    setShowDuaLibrary(false);
+    setShowImportModal(true);
+  }, []);
+
+  const handleAddPress = useCallback(() => {
+    setEditingDua(null);
+    setShowDuaLibrary(false);
+    setShowImportModal(true);
   }, []);
 
   const handleDeleteDua = useCallback((id: string) => {
@@ -439,9 +452,9 @@ export default function DhikrScreen() {
         </View>
 
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.actionBtn} onPress={() => setShowHistory(true)}>
-            <Text style={styles.actionIcon}>⏱</Text>
-            <Text style={styles.actionLabel}>History</Text>
+          <TouchableOpacity style={styles.actionBtn} onPress={() => setShowDuaLibrary(true)}>
+            <Text style={styles.actionIcon}>📖</Text>
+            <Text style={styles.actionLabel}>Duas</Text>
           </TouchableOpacity>
 
           <View style={styles.centerBtns}>
@@ -488,6 +501,7 @@ export default function DhikrScreen() {
         onManagePhrases={() => { setShowSettings(false); setShowPhrases(true); }}
         onImportDua={() => { setShowSettings(false); setShowImportModal(true); }}
         onManageDuas={() => { setShowSettings(false); setShowDuaLibrary(true); }}
+        onHistory={() => { setShowSettings(false); setShowHistory(true); }}
         onClose={() => setShowSettings(false)}
       />
       <PhrasesModal
@@ -520,13 +534,15 @@ export default function DhikrScreen() {
 
       <ImportDuaModal
         visible={showImportModal}
-        onAdd={handleAddDua}
-        onClose={() => setShowImportModal(false)}
+        initialDua={editingDua}
+        onAdd={handleSaveDua}
+        onClose={() => { setShowImportModal(false); setEditingDua(null); }}
       />
 
       <DuaLibrary
         visible={showDuaLibrary}
         duas={userDuas}
+        onAddPress={handleAddPress}
         onEdit={handleEditDua}
         onDelete={handleDeleteDua}
         onClose={() => setShowDuaLibrary(false)}

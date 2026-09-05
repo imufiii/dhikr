@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView,
   StyleSheet, Text, TextInput, TouchableOpacity, View,
@@ -8,11 +8,14 @@ import { UserDua } from '../constants/universalDuas';
 
 interface Props {
   visible: boolean;
+  initialDua?: UserDua | null;
   onAdd: (dua: UserDua) => void;
   onClose: () => void;
 }
 
-export default function ImportDuaModal({ visible, onAdd, onClose }: Props) {
+export default function ImportDuaModal({ visible, initialDua, onAdd, onClose }: Props) {
+  const isEditing = !!initialDua;
+  const [title, setTitle] = useState('');
   const [arabicText, setArabicText] = useState('');
   const [transliteration, setTransliteration] = useState('');
   const [englishMeaning, setEnglishMeaning] = useState('');
@@ -20,12 +23,24 @@ export default function ImportDuaModal({ visible, onAdd, onClose }: Props) {
   const [category, setCategory] = useState('Custom');
   const [justAdded, setJustAdded] = useState(false);
 
+  // Sync fields to the dua being edited (or clear for a fresh add).
+  useEffect(() => {
+    if (!visible) return;
+    setTitle(initialDua?.title ?? '');
+    setArabicText(initialDua?.arabicText ?? '');
+    setTransliteration(initialDua?.transliteration ?? '');
+    setEnglishMeaning(initialDua?.englishMeaning ?? '');
+    setSource(initialDua?.source ?? '');
+    setCategory(initialDua?.category ?? 'Custom');
+  }, [visible, initialDua]);
+
   const handleAdd = () => {
     const trimmed = arabicText.trim();
     if (!trimmed) return;
 
     const newDua: UserDua = {
-      id: `custom_${Date.now()}`,
+      id: initialDua?.id ?? `custom_${Date.now()}`,
+      title: title.trim() || undefined,
       arabicText: trimmed,
       transliteration: transliteration.trim(),
       englishMeaning: englishMeaning.trim(),
@@ -35,13 +50,16 @@ export default function ImportDuaModal({ visible, onAdd, onClose }: Props) {
     };
 
     onAdd(newDua);
-    setArabicText('');
-    setTransliteration('');
-    setEnglishMeaning('');
-    setSource('');
-    setCategory('Custom');
-    setJustAdded(true);
-    setTimeout(() => setJustAdded(false), 1500);
+    if (!isEditing) {
+      setTitle('');
+      setArabicText('');
+      setTransliteration('');
+      setEnglishMeaning('');
+      setSource('');
+      setCategory('Custom');
+      setJustAdded(true);
+      setTimeout(() => setJustAdded(false), 1500);
+    }
   };
 
   return (
@@ -53,10 +71,19 @@ export default function ImportDuaModal({ visible, onAdd, onClose }: Props) {
           style={styles.sheet}
         >
           <View style={styles.handle} />
-          <Text style={styles.title}>Add Dua</Text>
-          <Text style={styles.subtitle}>Search online, then paste here</Text>
+          <Text style={styles.title}>{isEditing ? 'Edit Dua' : 'Add Dua'}</Text>
+          <Text style={styles.subtitle}>{isEditing ? 'Update the details below' : 'Search online, then paste here'}</Text>
 
           <ScrollView style={styles.form} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+            <Text style={styles.label}>Title (optional)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Short name, e.g. Morning Dua"
+              placeholderTextColor={colors.muted}
+              value={title}
+              onChangeText={setTitle}
+            />
+
             <Text style={styles.label}>Arabic Text *</Text>
             <TextInput
               style={styles.arabicInput}
@@ -114,7 +141,9 @@ export default function ImportDuaModal({ visible, onAdd, onClose }: Props) {
               onPress={handleAdd}
               activeOpacity={0.7}
             >
-              <Text style={styles.addBtnText}>{justAdded ? '✓ Added!' : 'Add to My Library'}</Text>
+              <Text style={styles.addBtnText}>
+                {justAdded ? '✓ Added!' : isEditing ? 'Save Changes' : 'Add to My Library'}
+              </Text>
             </TouchableOpacity>
           </ScrollView>
         </KeyboardAvoidingView>

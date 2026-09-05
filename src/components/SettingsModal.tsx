@@ -21,6 +21,7 @@ interface Props {
   onManagePhrases: () => void;
   onImportDua: () => void;
   onManageDuas: () => void;
+  onHistory: () => void;
   onClose: () => void;
 }
 
@@ -69,7 +70,7 @@ function LinkRow({ icon, bg, label, sub, onPress, last }: {
 export default function SettingsModal({
   visible, haptic, setHaptic, shake, setShake,
   target, selectTarget,
-  onManagePhrases, onImportDua, onManageDuas, onClose,
+  onManagePhrases, onImportDua, onManageDuas, onHistory, onClose,
 }: Props) {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -121,6 +122,12 @@ export default function SettingsModal({
             <View style={styles.card}>
               <LinkRow icon="📖" bg="#1A3A2A" label="My Duas" sub="View and manage all duas" onPress={onManageDuas} />
               <LinkRow icon="➕" bg="#2A3A1A" label="Import Dua" sub="Add custom duas from library" onPress={onImportDua} last />
+            </View>
+
+            {/* Activity */}
+            <Text style={styles.sectionLabel}>Activity</Text>
+            <View style={styles.card}>
+              <LinkRow icon="⏱" bg="#1A2A3A" label="History" sub="Your past dhikr sessions" onPress={onHistory} last />
             </View>
 
             {/* About */}

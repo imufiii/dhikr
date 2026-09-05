@@ -8,12 +8,13 @@ import { UserDua } from '../constants/universalDuas';
 interface Props {
   visible: boolean;
   duas: UserDua[];
+  onAddPress: () => void;
   onEdit: (dua: UserDua) => void;
   onDelete: (id: string) => void;
   onClose: () => void;
 }
 
-export default function DuaLibrary({ visible, duas, onEdit, onDelete, onClose }: Props) {
+export default function DuaLibrary({ visible, duas, onAddPress, onEdit, onDelete, onClose }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -44,10 +45,9 @@ export default function DuaLibrary({ visible, duas, onEdit, onDelete, onClose }:
         >
           <View style={styles.duaItemHeader}>
             <View style={styles.duaItemText}>
-              <Text style={styles.arabicPreview} numberOfLines={1}>
-                {dua.arabicText}
+              <Text style={styles.titleLabel} numberOfLines={1}>
+                {dua.title || dua.source}
               </Text>
-              <Text style={styles.sourceLabel}>{dua.source}</Text>
             </View>
             <Text style={styles.expandIcon}>{isExpanded ? '▼' : '›'}</Text>
           </View>
@@ -61,6 +61,9 @@ export default function DuaLibrary({ visible, duas, onEdit, onDelete, onClose }:
             )}
             {dua.englishMeaning && (
               <Text style={styles.meaning}>{dua.englishMeaning}</Text>
+            )}
+            {dua.source && (
+              <Text style={styles.sourceLabel}>— {dua.source}</Text>
             )}
 
             {isCustom && (
@@ -95,8 +98,15 @@ export default function DuaLibrary({ visible, duas, onEdit, onDelete, onClose }:
         >
           <View style={styles.sheet}>
             <View style={styles.handle} />
-            <Text style={styles.title}>My Dua Library</Text>
-            <Text style={styles.subtitle}>{duas.length} duas total</Text>
+            <View style={styles.headerRow}>
+              <View>
+                <Text style={styles.title}>My Duas</Text>
+                <Text style={styles.subtitle}>{duas.length} duas · tap to read</Text>
+              </View>
+              <TouchableOpacity style={styles.addBtn} onPress={onAddPress} activeOpacity={0.7}>
+                <Text style={styles.addBtnText}>+ Add</Text>
+              </TouchableOpacity>
+            </View>
 
             <TextInput
               style={styles.searchInput}
@@ -169,6 +179,12 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginBottom: 12,
   },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   title: {
     fontSize: 20,
     color: colors.white,
@@ -179,7 +195,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.muted,
     fontFamily: fonts.ui,
-    marginBottom: 12,
+  },
+  addBtn: {
+    backgroundColor: colors.gold,
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  addBtnText: {
+    fontSize: 13,
+    color: colors.bg,
+    fontFamily: fonts.uiBold,
   },
   searchInput: {
     backgroundColor: colors.muted2,
@@ -226,17 +252,16 @@ const styles = StyleSheet.create({
   duaItemText: {
     flex: 1,
   },
-  arabicPreview: {
-    fontSize: 14,
-    color: colors.gold,
-    fontFamily: fonts.arabic,
-    textAlign: 'right',
-    marginBottom: 4,
+  titleLabel: {
+    fontSize: 15,
+    color: colors.white,
+    fontFamily: fonts.uiBold,
   },
   sourceLabel: {
     fontSize: 10,
     color: colors.muted,
     fontFamily: fonts.ui,
+    marginTop: 4,
   },
   expandIcon: {
     fontSize: 14,
