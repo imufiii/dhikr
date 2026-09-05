@@ -40,6 +40,7 @@ export interface DhikrState {
   todaysDua?: DailyDuaRecord | null;
   duaHistory?: DailyDuaRecord[];
   userDuas?: UserDua[];
+  removedBuiltInDuaIds?: string[];
 }
 
 const KEY = 'dhikr_state_v2';

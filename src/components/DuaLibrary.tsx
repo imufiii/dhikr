@@ -66,22 +66,22 @@ export default function DuaLibrary({ visible, duas, onAddPress, onEdit, onDelete
               <Text style={styles.sourceLabel}>— {dua.source}</Text>
             )}
 
-            {isCustom && (
-              <View style={styles.actions}>
+            <View style={styles.actions}>
+              {isCustom && (
                 <TouchableOpacity
                   style={[styles.actionBtn, styles.editBtn]}
                   onPress={() => onEdit(dua)}
                 >
                   <Text style={styles.actionBtnText}>✎ Edit</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.actionBtn, styles.deleteBtn]}
-                  onPress={() => onDelete(dua.id)}
-                >
-                  <Text style={styles.actionBtnText}>✕ Delete</Text>
-                </TouchableOpacity>
-              </View>
-            )}
+              )}
+              <TouchableOpacity
+                style={[styles.actionBtn, styles.deleteBtn]}
+                onPress={() => onDelete(dua.id)}
+              >
+                <Text style={styles.actionBtnText}>✕ Remove</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       </View>

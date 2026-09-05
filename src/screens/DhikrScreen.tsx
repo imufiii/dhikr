@@ -61,6 +61,7 @@ export default function DhikrScreen() {
   const [budgetCardShown, setBudgetCardShown] = useState(false);
   const [showBudgetCard, setShowBudgetCard] = useState(false);
   const [userDuas, setUserDuas] = useState<UserDua[]>(UNIVERSAL_DUAS);
+  const [removedBuiltInDuaIds, setRemovedBuiltInDuaIds] = useState<string[]>([]);
   const [selectedDuaId, setSelectedDuaId] = useState<string | null>(UNIVERSAL_DUAS[0].id);
   const [showImportModal, setShowImportModal] = useState(false);
   const [showDuaLibrary, setShowDuaLibrary] = useState(false);
@@ -96,13 +97,18 @@ export default function DhikrScreen() {
       lastDateRef.current = s.lastDate;
       const shown = s.budgetCardShown ?? false;
       setBudgetCardShown(shown);
+      const removedIds = s.removedBuiltInDuaIds ?? [];
+      setRemovedBuiltInDuaIds(removedIds);
       if (s.userDuas && s.userDuas.length > 0) {
         // Built-in dua metadata (titles, wording) always comes from code so it
         // stays current; only the user's own custom duas persist from storage.
+        // Built-ins the user deleted are filtered out by their saved ids.
         const customDuas = s.userDuas.filter(d => !d.isBuiltIn);
-        const merged = [...UNIVERSAL_DUAS, ...customDuas];
+        const builtIns = UNIVERSAL_DUAS.filter(d => !removedIds.includes(d.id));
+        const merged = [...builtIns, ...customDuas];
         setUserDuas(merged);
-        setSelectedDuaId(merged[0].id);
+        if (merged.length > 0) setSelectedDuaId(merged[0].id);
+        else setSelectedDuaId(null);
       }
       setReady(true);
     });
@@ -129,8 +135,8 @@ export default function DhikrScreen() {
 
   useEffect(() => {
     if (!ready) return;
-    saveState({ phraseIndex, target, haptic, shake, history, todayCount, lastDate: lastDateRef.current, dailyTotals, phraseTotals, customPhrases, budgetCardShown, userDuas });
-  }, [phraseIndex, target, haptic, shake, history, todayCount, dailyTotals, phraseTotals, customPhrases, budgetCardShown, userDuas, ready]);
+    saveState({ phraseIndex, target, haptic, shake, history, todayCount, lastDate: lastDateRef.current, dailyTotals, phraseTotals, customPhrases, budgetCardShown, userDuas, removedBuiltInDuaIds });
+  }, [phraseIndex, target, haptic, shake, history, todayCount, dailyTotals, phraseTotals, customPhrases, budgetCardShown, userDuas, removedBuiltInDuaIds, ready]);
 
   useEffect(() => {
     const pct = target > 0 ? Math.min(count / target, 1) : 0;
@@ -294,8 +300,13 @@ export default function DhikrScreen() {
   }, []);
 
   const handleDeleteDua = useCallback((id: string) => {
+    const removed = userDuas.find(x => x.id === id);
     const filtered = userDuas.filter(x => x.id !== id);
     setUserDuas(filtered);
+    // Remember deleted built-ins so they don't reappear on next launch.
+    if (removed?.isBuiltIn) {
+      setRemovedBuiltInDuaIds(ids => ids.includes(id) ? ids : [...ids, id]);
+    }
     if (selectedDuaId === id) {
       setSelectedDuaId(filtered[0]?.id || null);
     }
