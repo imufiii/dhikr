@@ -96,10 +96,12 @@ export default function DhikrScreen() {
       const shown = s.budgetCardShown ?? false;
       setBudgetCardShown(shown);
       if (s.userDuas && s.userDuas.length > 0) {
-        setUserDuas(s.userDuas);
-        if (s.userDuas[0]) {
-          setSelectedDuaId(s.userDuas[0].id);
-        }
+        // Built-in dua metadata (titles, wording) always comes from code so it
+        // stays current; only the user's own custom duas persist from storage.
+        const customDuas = s.userDuas.filter(d => !d.isBuiltIn);
+        const merged = [...UNIVERSAL_DUAS, ...customDuas];
+        setUserDuas(merged);
+        setSelectedDuaId(merged[0].id);
       }
       setReady(true);
     });
@@ -371,7 +373,6 @@ export default function DhikrScreen() {
           duas={userDuas}
           selectedId={selectedDuaId}
           onSelect={setSelectedDuaId}
-          onLibraryPress={() => setShowDuaLibrary(true)}
         />
       </View>
 
