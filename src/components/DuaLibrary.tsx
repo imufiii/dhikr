@@ -16,71 +16,93 @@ interface Props {
   onClose: () => void;
 }
 
+// Collection display: an emoji face + a friendly label per category.
+const CATEGORY_META: Record<string, { label: string; icon: string }> = {
+  'Morning & Evening': { label: 'Morning & Evening', icon: '🌅' },
+  'Prayer':            { label: 'Prayer',            icon: '🕌' },
+  'Sleep':             { label: 'Sleep',             icon: '🌙' },
+  'Purification':      { label: 'Purification',      icon: '💧' },
+  'Daily':             { label: 'Daily Life',        icon: '🏠' },
+  'Forgiveness':       { label: 'Forgiveness',       icon: '🤲' },
+  'Reliance':          { label: 'Reliance',          icon: '🕊️' },
+  'Distress':          { label: 'Distress',          icon: '💛' },
+};
+const CATEGORY_ORDER = Object.keys(CATEGORY_META);
+
+function meta(category: string) {
+  return CATEGORY_META[category] || { label: category || 'Custom', icon: '📿' };
+}
+
+function arabicSnippet(text: string) {
+  const words = text.trim().split(/\s+/);
+  return words.slice(0, 2).join(' ');
+}
+
 export default function DuaLibrary({ visible, duas, removedCount, onAddPress, onEdit, onDelete, onRestoreBuiltIns, onClose }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [collection, setCollection] = useState<string>('all');
 
-  const filteredDuas = useMemo(() => {
-    if (!searchQuery.trim()) return duas;
-    const query = searchQuery.toLowerCase();
+  // Collection chips, derived from the categories actually present (stable counts).
+  const collections = useMemo(() => {
+    const counts: Record<string, number> = {};
+    duas.forEach(d => { counts[d.category] = (counts[d.category] || 0) + 1; });
+    return Object.keys(counts)
+      .sort((a, b) => {
+        const ia = CATEGORY_ORDER.indexOf(a); const ib = CATEGORY_ORDER.indexOf(b);
+        return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+      })
+      .map(c => ({ key: c, count: counts[c], ...meta(c) }));
+  }, [duas]);
+
+  const visibleDuas = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
     return duas.filter(d => {
-      const arabicMatch = d.arabicText.includes(searchQuery);
-      const translitMatch = d.transliteration.toLowerCase().includes(query);
-      const meaningMatch = d.englishMeaning.toLowerCase().includes(query);
-      const sourceMatch = d.source.toLowerCase().includes(query);
-      return arabicMatch || translitMatch || meaningMatch || sourceMatch;
+      if (collection !== 'all' && d.category !== collection) return false;
+      if (!q) return true;
+      return d.arabicText.includes(searchQuery)
+        || d.transliteration.toLowerCase().includes(q)
+        || d.englishMeaning.toLowerCase().includes(q)
+        || d.source.toLowerCase().includes(q)
+        || (d.title || '').toLowerCase().includes(q);
     });
-  }, [duas, searchQuery]);
+  }, [duas, collection, searchQuery]);
 
-  const builtInDuas = filteredDuas.filter(d => d.isBuiltIn);
-  const customDuas = filteredDuas.filter(d => !d.isBuiltIn);
-
-  const DuaItem = ({ dua, isCustom }: { dua: UserDua; isCustom: boolean }) => {
+  const Row = ({ dua }: { dua: UserDua }) => {
     const isExpanded = expandedId === dua.id;
-
+    const { icon } = meta(dua.category);
     return (
-      <View key={dua.id}>
+      <View style={[styles.row, isExpanded && styles.rowOpen]}>
         <TouchableOpacity
-          style={styles.duaItem}
+          style={styles.rowHead}
           onPress={() => setExpandedId(isExpanded ? null : dua.id)}
           activeOpacity={0.7}
         >
-          <View style={styles.duaItemHeader}>
-            <View style={styles.duaItemText}>
-              <Text style={styles.titleLabel} numberOfLines={1}>
-                {dua.title || dua.source}
-              </Text>
-            </View>
-            <Text style={styles.expandIcon}>{isExpanded ? '▼' : '›'}</Text>
+          <View style={styles.iconChip}><Text style={styles.iconEmoji}>{icon}</Text></View>
+          <View style={styles.rowMid}>
+            <Text style={styles.rowTitle} numberOfLines={1}>{dua.title || dua.source}</Text>
+            {!!dua.englishMeaning && (
+              <Text style={styles.rowMeaning} numberOfLines={1}>{dua.englishMeaning}</Text>
+            )}
           </View>
+          {isExpanded
+            ? <Text style={styles.chev}>▾</Text>
+            : <Text style={styles.rowArabic} numberOfLines={1}>{arabicSnippet(dua.arabicText)}</Text>}
         </TouchableOpacity>
 
         {isExpanded && (
-          <View style={styles.duaExpanded}>
+          <View style={styles.expanded}>
             <Text style={styles.arabicFull}>{dua.arabicText}</Text>
-            {dua.transliteration && (
-              <Text style={styles.transliteration}>{dua.transliteration}</Text>
-            )}
-            {dua.englishMeaning && (
-              <Text style={styles.meaning}>{dua.englishMeaning}</Text>
-            )}
-            {dua.source && (
-              <Text style={styles.sourceLabel}>— {dua.source}</Text>
-            )}
-
+            {!!dua.transliteration && <Text style={styles.translit}>{dua.transliteration}</Text>}
+            {!!dua.englishMeaning && <Text style={styles.meaning}>{dua.englishMeaning}</Text>}
+            {!!dua.source && <Text style={styles.src}>— {dua.source}</Text>}
             <View style={styles.actions}>
-              {isCustom && (
-                <TouchableOpacity
-                  style={[styles.actionBtn, styles.editBtn]}
-                  onPress={() => onEdit(dua)}
-                >
+              {!dua.isBuiltIn && (
+                <TouchableOpacity style={[styles.actionBtn, styles.editBtn]} onPress={() => onEdit(dua)}>
                   <Text style={styles.actionBtnText}>✎ Edit</Text>
                 </TouchableOpacity>
               )}
-              <TouchableOpacity
-                style={[styles.actionBtn, styles.deleteBtn]}
-                onPress={() => onDelete(dua.id)}
-              >
+              <TouchableOpacity style={[styles.actionBtn, styles.deleteBtn]} onPress={() => onDelete(dua.id)}>
                 <Text style={styles.actionBtnText}>✕ Remove</Text>
               </TouchableOpacity>
             </View>
@@ -90,29 +112,44 @@ export default function DuaLibrary({ visible, duas, removedCount, onAddPress, on
     );
   };
 
+  const Chip = ({ label, icon, count, value }: { label: string; icon?: string; count: number; value: string }) => {
+    const active = collection === value;
+    return (
+      <TouchableOpacity
+        style={[styles.chip, active && styles.chipActive]}
+        onPress={() => setCollection(value)}
+        activeOpacity={0.7}
+      >
+        {!!icon && <Text style={styles.chipIcon}>{icon}</Text>}
+        <Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text>
+        <Text style={[styles.chipCount, active && styles.chipCountActive]}>{count}</Text>
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+          keyboardVerticalOffset={0}
           style={{ flex: 1, justifyContent: 'flex-end' }}
         >
           <View style={styles.sheet}>
             <View style={styles.handle} />
             <View style={styles.headerRow}>
               <View>
-                <Text style={styles.title}>My Duas</Text>
-                <Text style={styles.subtitle}>{duas.length} duas · tap to read</Text>
+                <Text style={styles.title}>Duas</Text>
+                <Text style={styles.subtitle}>{duas.length} saved · Sunnah &amp; Qur’an</Text>
               </View>
               <TouchableOpacity style={styles.addBtn} onPress={onAddPress} activeOpacity={0.7}>
-                <Text style={styles.addBtnText}>+ Add</Text>
+                <Text style={styles.addBtnText}>＋ Add</Text>
               </TouchableOpacity>
             </View>
 
             <TextInput
               style={styles.searchInput}
-              placeholder="Search duas..."
+              placeholder="Search duas…"
               placeholderTextColor={colors.muted}
               value={searchQuery}
               onChangeText={setSearchQuery}
@@ -121,40 +158,40 @@ export default function DuaLibrary({ visible, duas, removedCount, onAddPress, on
               autoCorrect={false}
             />
 
-            <ScrollView style={styles.list} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} bounces={false}>
-            {builtInDuas.length > 0 && (
-              <>
-                <Text style={styles.sectionLabel}>Built-in Duas</Text>
-                <View style={styles.section}>
-                  {builtInDuas.map(dua => (
-                    <DuaItem key={dua.id} dua={dua} isCustom={false} />
-                  ))}
-                </View>
-              </>
-            )}
+            <View style={styles.chipsWrap}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+                contentContainerStyle={styles.chipsContent}
+              >
+                <Chip label="All" count={duas.length} value="all" />
+                {collections.map(c => (
+                  <Chip key={c.key} label={c.label} icon={c.icon} count={c.count} value={c.key} />
+                ))}
+              </ScrollView>
+            </View>
 
-            {customDuas.length > 0 && (
-              <>
-                <Text style={styles.sectionLabel}>My Custom Duas</Text>
-                <View style={styles.section}>
-                  {customDuas.map(dua => (
-                    <DuaItem key={dua.id} dua={dua} isCustom={true} />
-                  ))}
-                </View>
-              </>
-            )}
+            <ScrollView
+              style={styles.list}
+              contentContainerStyle={styles.listContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              bounces={false}
+            >
+              {visibleDuas.map(dua => <Row key={dua.id} dua={dua} />)}
 
-            {duas.length === 0 && (
-              <Text style={styles.empty}>No duas yet. Add your first one!</Text>
-            )}
-
-            {removedCount > 0 && (
-              <TouchableOpacity style={styles.restoreBtn} onPress={onRestoreBuiltIns} activeOpacity={0.7}>
-                <Text style={styles.restoreBtnText}>
-                  ↺ Restore built-in duas ({removedCount})
+              {visibleDuas.length === 0 && (
+                <Text style={styles.empty}>
+                  {duas.length === 0 ? 'No duas yet. Add your first one!' : 'No duas in this collection.'}
                 </Text>
-              </TouchableOpacity>
-            )}
+              )}
+
+              {removedCount > 0 && (
+                <TouchableOpacity style={styles.restoreBtn} onPress={onRestoreBuiltIns} activeOpacity={0.7}>
+                  <Text style={styles.restoreBtnText}>↺ Restore built-in duas ({removedCount})</Text>
+                </TouchableOpacity>
+              )}
             </ScrollView>
           </View>
         </KeyboardAvoidingView>
@@ -176,177 +213,87 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     paddingHorizontal: 16,
     paddingTop: 12,
-    paddingBottom: 32,
+    paddingBottom: 24,
     borderTopWidth: 1,
     borderTopColor: colors.goldDim,
-    maxHeight: '88%',
+    maxHeight: '90%',
   },
   handle: {
-    width: 36,
-    height: 4,
-    backgroundColor: colors.muted2,
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginBottom: 12,
+    width: 36, height: 4, backgroundColor: colors.muted2, borderRadius: 2,
+    alignSelf: 'center', marginBottom: 14,
   },
   headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14,
   },
-  title: {
-    fontSize: 20,
-    color: colors.white,
-    fontFamily: fonts.uiBold,
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 12,
-    color: colors.muted,
-    fontFamily: fonts.ui,
-  },
-  addBtn: {
-    backgroundColor: colors.gold,
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-  },
-  addBtnText: {
-    fontSize: 13,
-    color: colors.bg,
-    fontFamily: fonts.uiBold,
-  },
+  title: { fontSize: 24, color: colors.white, fontFamily: fonts.uiBold, marginBottom: 3 },
+  subtitle: { fontSize: 12, color: colors.muted, fontFamily: fonts.ui },
+  addBtn: { backgroundColor: colors.gold, borderRadius: 11, paddingVertical: 9, paddingHorizontal: 16 },
+  addBtnText: { fontSize: 13, color: colors.bg, fontFamily: fonts.uiBold },
+
   searchInput: {
-    backgroundColor: colors.muted2,
-    borderWidth: 1,
-    borderColor: colors.goldDim,
-    color: colors.white,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 13,
-    fontFamily: fonts.ui,
+    backgroundColor: colors.muted2, borderWidth: 1, borderColor: colors.goldDim, color: colors.white,
+    borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, fontSize: 13, fontFamily: fonts.ui,
     marginBottom: 12,
   },
-  list: {
-    flex: 1,
+
+  chipsWrap: { marginBottom: 12 },
+  chipsContent: { gap: 8, paddingRight: 8 },
+  chip: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: 'rgba(201,168,76,0.08)', borderWidth: 1, borderColor: 'rgba(201,168,76,0.16)',
+    borderRadius: 20, paddingVertical: 7, paddingHorizontal: 12,
   },
-  sectionLabel: {
-    fontSize: 11,
-    color: colors.gold,
-    fontFamily: fonts.uiBold,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    marginTop: 12,
-    marginBottom: 8,
+  chipActive: { backgroundColor: colors.gold, borderColor: colors.gold },
+  chipIcon: { fontSize: 13 },
+  chipText: { fontSize: 12.5, color: colors.white, fontFamily: fonts.uiBold },
+  chipTextActive: { color: colors.bg },
+  chipCount: { fontSize: 11, color: colors.muted, fontFamily: fonts.ui },
+  chipCountActive: { color: 'rgba(17,24,39,0.6)' },
+
+  list: { flex: 1 },
+  listContent: { gap: 9, paddingBottom: 8 },
+
+  row: {
+    backgroundColor: 'rgba(201,168,76,0.06)', borderRadius: 15,
+    borderWidth: 1, borderColor: 'rgba(201,168,76,0.14)', overflow: 'hidden',
   },
-  section: {
-    gap: 8,
-    marginBottom: 16,
+  rowOpen: { backgroundColor: 'rgba(201,168,76,0.1)', borderColor: 'rgba(201,168,76,0.3)' },
+  rowHead: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 13 },
+  iconChip: {
+    width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(201,168,76,0.12)',
+    alignItems: 'center', justifyContent: 'center',
   },
-  duaItem: {
-    backgroundColor: 'rgba(201,168,76,0.08)',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(201,168,76,0.15)',
-    overflow: 'hidden',
+  iconEmoji: { fontSize: 18 },
+  rowMid: { flex: 1, minWidth: 0 },
+  rowTitle: { fontSize: 14.5, color: colors.white, fontFamily: fonts.uiBold },
+  rowMeaning: { fontSize: 11.5, color: colors.muted, fontFamily: fonts.ui, marginTop: 2 },
+  rowArabic: {
+    fontSize: 15, color: 'rgba(201,168,76,0.85)', fontFamily: fonts.arabic,
+    maxWidth: 92, textAlign: 'right', marginLeft: 8,
   },
-  duaItemHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-  },
-  duaItemText: {
-    flex: 1,
-  },
-  titleLabel: {
-    fontSize: 15,
-    color: colors.white,
-    fontFamily: fonts.uiBold,
-  },
-  sourceLabel: {
-    fontSize: 10,
-    color: colors.muted,
-    fontFamily: fonts.ui,
-    marginTop: 4,
-  },
-  expandIcon: {
-    fontSize: 14,
-    color: colors.gold,
-    marginLeft: 8,
-  },
-  duaExpanded: {
+  chev: { fontSize: 13, color: colors.gold, marginLeft: 8 },
+
+  expanded: {
+    borderTopWidth: 1, borderTopColor: 'rgba(201,168,76,0.12)',
+    paddingVertical: 13, paddingHorizontal: 14, gap: 8,
     backgroundColor: 'rgba(201,168,76,0.04)',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(201,168,76,0.1)',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    gap: 8,
   },
-  arabicFull: {
-    fontSize: 16,
-    color: colors.gold,
-    fontFamily: fonts.arabic,
-    textAlign: 'right',
-    lineHeight: 26,
-  },
-  transliteration: {
-    fontSize: 10,
-    color: colors.muted,
-    fontFamily: fonts.ui,
-    fontStyle: 'italic',
-  },
-  meaning: {
-    fontSize: 12,
-    color: 'rgba(245,240,232,0.7)',
-    fontFamily: fonts.ui,
-    lineHeight: 18,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 8,
-  },
-  actionBtn: {
-    flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  editBtn: {
-    backgroundColor: 'rgba(201,168,76,0.3)',
-  },
-  deleteBtn: {
-    backgroundColor: 'rgba(239,68,68,0.2)',
-  },
-  actionBtnText: {
-    fontSize: 11,
-    color: colors.white,
-    fontFamily: fonts.uiBold,
-  },
-  empty: {
-    color: colors.muted,
-    fontSize: 13,
-    textAlign: 'center',
-    paddingVertical: 32,
-    fontFamily: fonts.ui,
-  },
+  arabicFull: { fontSize: 18, color: colors.gold, fontFamily: fonts.arabic, textAlign: 'right', lineHeight: 30 },
+  translit: { fontSize: 11, color: colors.muted, fontFamily: fonts.ui, fontStyle: 'italic', lineHeight: 16 },
+  meaning: { fontSize: 12.5, color: 'rgba(245,240,232,0.72)', fontFamily: fonts.ui, lineHeight: 18 },
+  src: { fontSize: 10.5, color: colors.muted, fontFamily: fonts.ui, marginTop: 2 },
+
+  actions: { flexDirection: 'row', gap: 8, marginTop: 6 },
+  actionBtn: { flex: 1, paddingVertical: 9, borderRadius: 9, alignItems: 'center' },
+  editBtn: { backgroundColor: 'rgba(201,168,76,0.28)' },
+  deleteBtn: { backgroundColor: 'rgba(239,68,68,0.18)' },
+  actionBtnText: { fontSize: 11.5, color: colors.white, fontFamily: fonts.uiBold },
+
+  empty: { color: colors.muted, fontSize: 13, textAlign: 'center', paddingVertical: 40, fontFamily: fonts.ui },
+
   restoreBtn: {
-    borderWidth: 1,
-    borderColor: colors.goldDim,
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 8,
+    borderWidth: 1, borderColor: colors.goldDim, borderRadius: 12,
+    paddingVertical: 12, alignItems: 'center', marginTop: 6,
   },
-  restoreBtnText: {
-    fontSize: 12.5,
-    color: colors.gold,
-    fontFamily: fonts.uiBold,
-  },
+  restoreBtnText: { fontSize: 12.5, color: colors.gold, fontFamily: fonts.uiBold },
 });
