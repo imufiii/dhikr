@@ -38,10 +38,32 @@ function arabicSnippet(text: string) {
   return words.slice(0, 2).join(' ');
 }
 
+// The "dua of the moment": pick a fitting dua from what the user still has,
+// based on the time of day (approximates the prayer-time rhythm, offline).
+function pickFeatured(duas: UserDua[]): { dua: UserDua; label: string; icon: string } | null {
+  if (duas.length === 0) return null;
+  const hour = new Date().getHours();
+  let candidates: string[]; let label: string; let icon: string;
+  if (hour >= 4 && hour < 11)       { candidates = ['dua_morning'];                              label = 'For this morning'; icon = '🌅'; }
+  else if (hour >= 11 && hour < 16) { candidates = ['dua_istighfar', 'universal_1'];             label = 'This afternoon';   icon = '☀️'; }
+  else if (hour >= 16 && hour < 19) { candidates = ['dua_evening'];                              label = 'This evening';     icon = '🌇'; }
+  else if (hour >= 19 && hour < 22) { candidates = ['dua_istighfar', 'dua_evening'];             label = 'After Maghrib';    icon = '🌆'; }
+  else                              { candidates = ['dua_mulk', 'universal_1_sleep', 'dua_night_waking']; label = 'Before sleep'; icon = '🌙'; }
+
+  let dua: UserDua | undefined;
+  for (const id of candidates) { dua = duas.find(d => d.id === id); if (dua) break; }
+  if (!dua) dua = duas.find(d => d.isBuiltIn) || duas[0];
+  return dua ? { dua, label, icon } : null;
+}
+
 export default function DuaLibrary({ visible, duas, removedCount, onAddPress, onEdit, onDelete, onRestoreBuiltIns, onClose }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [collection, setCollection] = useState<string>('all');
+  const [featureOpen, setFeatureOpen] = useState(false);
+
+  const featured = useMemo(() => pickFeatured(duas), [duas]);
+  const showFeature = collection === 'all' && !searchQuery.trim() && !!featured;
 
   // Collection chips, derived from the categories actually present (stable counts).
   const collections = useMemo(() => {
@@ -179,6 +201,32 @@ export default function DuaLibrary({ visible, duas, removedCount, onAddPress, on
               showsVerticalScrollIndicator={false}
               bounces={false}
             >
+              {showFeature && featured && (
+                <TouchableOpacity
+                  style={styles.feature}
+                  activeOpacity={0.85}
+                  onPress={() => setFeatureOpen(o => !o)}
+                >
+                  <Text style={styles.feEyebrow}>{featured.icon}  {featured.label.toUpperCase()}</Text>
+                  <Text style={styles.feArabic} numberOfLines={featureOpen ? undefined : 2}>
+                    {featured.dua.arabicText}
+                  </Text>
+                  {featureOpen && !!featured.dua.transliteration && (
+                    <Text style={styles.feTranslit}>{featured.dua.transliteration}</Text>
+                  )}
+                  <Text style={styles.feTitle}>{featured.dua.title || featured.dua.source}</Text>
+                  {!!featured.dua.englishMeaning && (
+                    <Text style={styles.feMean} numberOfLines={featureOpen ? undefined : 2}>
+                      {featured.dua.englishMeaning}
+                    </Text>
+                  )}
+                  <View style={styles.feFoot}>
+                    {!!featured.dua.source && <Text style={styles.srcTag}>{featured.dua.source}</Text>}
+                    <Text style={styles.readBtn}>{featureOpen ? 'Show less ▴' : 'Read →'}</Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+
               {visibleDuas.map(dua => <Row key={dua.id} dua={dua} />)}
 
               {visibleDuas.length === 0 && (
@@ -252,6 +300,36 @@ const styles = StyleSheet.create({
 
   list: { flex: 1 },
   listContent: { gap: 9, paddingBottom: 8 },
+
+  feature: {
+    backgroundColor: 'rgba(201,168,76,0.13)',
+    borderWidth: 1, borderColor: 'rgba(201,168,76,0.32)',
+    borderRadius: 18, padding: 16, marginBottom: 4,
+  },
+  feEyebrow: {
+    fontSize: 10.5, letterSpacing: 1, color: colors.gold, fontFamily: fonts.uiBold, marginBottom: 10,
+  },
+  feArabic: {
+    fontSize: 19, color: colors.gold, fontFamily: fonts.arabic, textAlign: 'right', lineHeight: 32,
+  },
+  feTranslit: {
+    fontSize: 11, color: colors.muted, fontFamily: fonts.ui, fontStyle: 'italic', lineHeight: 16, marginTop: 8,
+  },
+  feTitle: {
+    fontSize: 17, color: colors.white, fontFamily: fonts.uiBold, marginTop: 10, marginBottom: 4,
+  },
+  feMean: { fontSize: 12.5, color: 'rgba(245,240,232,0.72)', fontFamily: fonts.ui, lineHeight: 18 },
+  feFoot: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 14,
+  },
+  srcTag: {
+    fontSize: 10, color: colors.muted, fontFamily: fonts.ui,
+    borderWidth: 1, borderColor: colors.muted2, borderRadius: 20, paddingVertical: 3, paddingHorizontal: 10,
+  },
+  readBtn: {
+    fontSize: 12.5, color: colors.bg, fontFamily: fonts.uiBold,
+    backgroundColor: colors.gold, borderRadius: 20, paddingVertical: 8, paddingHorizontal: 16, overflow: 'hidden',
+  },
 
   row: {
     backgroundColor: 'rgba(201,168,76,0.06)', borderRadius: 15,
