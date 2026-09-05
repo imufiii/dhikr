@@ -41,6 +41,8 @@ export interface DhikrState {
   duaHistory?: DailyDuaRecord[];
   userDuas?: UserDua[];
   removedBuiltInDuaIds?: string[];
+  routineDate?: string;
+  routineDone?: string[];
 }
 
 const KEY = 'dhikr_state_v2';

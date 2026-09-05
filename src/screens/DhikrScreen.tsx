@@ -27,6 +27,7 @@ import PhrasesModal from '../components/PhrasesModal';
 import BarakahBudgetCard from '../components/BarakahBudgetCard';
 import ImportDuaModal from '../components/ImportDuaModal';
 import DuaLibrary from '../components/DuaLibrary';
+import MyDayModal from '../components/MyDayModal';
 import { usePrayerTimes } from '../hooks/usePrayerTimes';
 import { UNIVERSAL_DUAS, UserDua } from '../constants/universalDuas';
 
@@ -65,6 +66,8 @@ export default function DhikrScreen() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [showDuaLibrary, setShowDuaLibrary] = useState(false);
   const [editingDua, setEditingDua] = useState<UserDua | null>(null);
+  const [showMyDay, setShowMyDay] = useState(false);
+  const [routineDone, setRoutineDone] = useState<string[]>([]);
 
   const sessionStart = useRef(Date.now());
   const lastDateRef = useRef('');
@@ -98,6 +101,8 @@ export default function DhikrScreen() {
       setBudgetCardShown(shown);
       const removedIds = s.removedBuiltInDuaIds ?? [];
       setRemovedBuiltInDuaIds(removedIds);
+      // Routine check-offs are per-day; keep them only if they're from today.
+      setRoutineDone(s.routineDate === todayString() ? (s.routineDone ?? []) : []);
       if (s.userDuas && s.userDuas.length > 0) {
         // Built-in dua metadata (titles, wording) always comes from code so it
         // stays current; only the user's own custom duas persist from storage.
@@ -126,6 +131,7 @@ export default function DhikrScreen() {
           setDailyTotals(d => ({ ...d, [oldDate]: oldCount }));
         }
         setTodayCount(0);
+        setRoutineDone([]);
         lastDateRef.current = today;
       }
     }, 60_000);
@@ -134,8 +140,8 @@ export default function DhikrScreen() {
 
   useEffect(() => {
     if (!ready) return;
-    saveState({ phraseIndex, target, haptic, shake, history, todayCount, lastDate: lastDateRef.current, dailyTotals, phraseTotals, customPhrases, budgetCardShown, userDuas, removedBuiltInDuaIds });
-  }, [phraseIndex, target, haptic, shake, history, todayCount, dailyTotals, phraseTotals, customPhrases, budgetCardShown, userDuas, removedBuiltInDuaIds, ready]);
+    saveState({ phraseIndex, target, haptic, shake, history, todayCount, lastDate: lastDateRef.current, dailyTotals, phraseTotals, customPhrases, budgetCardShown, userDuas, removedBuiltInDuaIds, routineDate: todayString(), routineDone });
+  }, [phraseIndex, target, haptic, shake, history, todayCount, dailyTotals, phraseTotals, customPhrases, budgetCardShown, userDuas, removedBuiltInDuaIds, routineDone, ready]);
 
   useEffect(() => {
     const pct = target > 0 ? Math.min(count / target, 1) : 0;
@@ -311,6 +317,10 @@ export default function DhikrScreen() {
     }
   }, [selectedDuaId, userDuas]);
 
+  const toggleRoutineItem = useCallback((id: string) => {
+    setRoutineDone(d => d.includes(id) ? d.filter(x => x !== id) : [...d, id]);
+  }, []);
+
   // Bring back any removed built-in duas (non-destructive — keeps custom duas).
   const handleRestoreBuiltIns = useCallback(() => {
     setUserDuas(current => {
@@ -463,10 +473,16 @@ export default function DhikrScreen() {
         </View>
 
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.actionBtn} onPress={() => setShowDuaLibrary(true)}>
-            <Text style={styles.actionIcon}>📖</Text>
-            <Text style={styles.actionLabel}>Duas</Text>
-          </TouchableOpacity>
+          <View style={styles.sideLeft}>
+            <TouchableOpacity style={styles.actionBtn} onPress={() => setShowDuaLibrary(true)}>
+              <Text style={styles.actionIcon}>📖</Text>
+              <Text style={styles.actionLabel}>Duas</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionBtn} onPress={() => setShowMyDay(true)}>
+              <Text style={styles.actionIcon}>🗓</Text>
+              <Text style={styles.actionLabel}>My Day</Text>
+            </TouchableOpacity>
+          </View>
 
           <View style={styles.centerBtns}>
             <TouchableOpacity style={styles.resetBtn} onPress={reset}>
@@ -484,10 +500,12 @@ export default function DhikrScreen() {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={styles.actionBtn} onPress={() => setShowSettings(true)}>
-            <Text style={styles.actionIcon}>⚙️</Text>
-            <Text style={styles.actionLabel}>Settings</Text>
-          </TouchableOpacity>
+          <View style={styles.sideRight}>
+            <TouchableOpacity style={styles.actionBtn} onPress={() => setShowSettings(true)}>
+              <Text style={styles.actionIcon}>⚙️</Text>
+              <Text style={styles.actionLabel}>Settings</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
       </View>
@@ -557,6 +575,13 @@ export default function DhikrScreen() {
         onDelete={handleDeleteDua}
         onRestoreBuiltIns={handleRestoreBuiltIns}
         onClose={() => setShowDuaLibrary(false)}
+      />
+
+      <MyDayModal
+        visible={showMyDay}
+        doneIds={routineDone}
+        onToggle={toggleRoutineItem}
+        onClose={() => setShowMyDay(false)}
       />
     </SafeAreaView>
   );
@@ -707,7 +732,17 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 32,
+    width: '100%',
+  },
+  sideLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 22,
+  },
+  sideRight: {
+    flex: 1,
+    alignItems: 'flex-end',
   },
   actionBtn: {
     alignItems: 'center',
@@ -726,6 +761,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.ui,
   },
   centerBtns: {
+    flex: 1,
     alignItems: 'center',
     gap: 6,
   },
