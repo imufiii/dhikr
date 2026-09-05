@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  Modal, Platform, Pressable, ScrollView,
+  KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView,
   StyleSheet, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
 import { colors, fonts } from '../constants/theme';
@@ -18,6 +18,7 @@ export default function PhrasesModal({ visible, customPhrases, onAdd, onDelete, 
   const [ar, setAr] = useState('');
   const [ro, setRo] = useState('');
   const [en, setEn] = useState('');
+  const [justAdded, setJustAdded] = useState(false);
 
   function handleAdd() {
     const trimmed = ar.trim();
@@ -26,18 +27,27 @@ export default function PhrasesModal({ visible, customPhrases, onAdd, onDelete, 
     setAr('');
     setRo('');
     setEn('');
+    setJustAdded(true);
+    setTimeout(() => setJustAdded(false), 1500);
   }
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose}>
-        <View style={styles.sheet}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 32}
+          style={styles.sheet}
+        >
           <View style={styles.handle} />
           <Text style={styles.title}>Custom Phrases</Text>
 
           <ScrollView style={styles.list} keyboardShouldPersistTaps="handled">
             {customPhrases.length === 0 && (
-              <Text style={styles.empty}>No custom phrases yet</Text>
+              <Text style={styles.empty}>No custom phrases yet{'\n'}Add your first one below</Text>
+            )}
+            {customPhrases.length > 0 && (
+              <Text style={styles.listCount}>{customPhrases.length} phrase{customPhrases.length > 1 ? 's' : ''} saved</Text>
             )}
             {customPhrases.map((p, i) => (
               <View key={i} style={styles.phraseRow}>
@@ -60,7 +70,6 @@ export default function PhrasesModal({ visible, customPhrases, onAdd, onDelete, 
               value={ar}
               onChangeText={setAr}
               textAlign="right"
-              writingDirection="rtl"
               autoCorrect={false}
             />
             <TextInput
@@ -79,14 +88,14 @@ export default function PhrasesModal({ visible, customPhrases, onAdd, onDelete, 
               onChangeText={setEn}
             />
             <TouchableOpacity
-              style={[styles.addBtn, !ar.trim() && styles.addBtnDisabled]}
+              style={[styles.addBtn, !ar.trim() && styles.addBtnDisabled, justAdded && styles.addBtnSuccess]}
               onPress={handleAdd}
               activeOpacity={0.7}
             >
-              <Text style={styles.addBtnText}>Add Phrase</Text>
+              <Text style={styles.addBtnText}>{justAdded ? '✓ Added!' : 'Add Phrase'}</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Pressable>
     </Modal>
   );
@@ -134,6 +143,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingVertical: 16,
     fontFamily: fonts.ui,
+  },
+  listCount: {
+    color: colors.gold,
+    fontSize: 11,
+    textAlign: 'center',
+    paddingVertical: 8,
+    fontFamily: fonts.ui,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   phraseRow: {
     flexDirection: 'row',
@@ -200,6 +218,9 @@ const styles = StyleSheet.create({
   },
   addBtnDisabled: {
     opacity: 0.35,
+  },
+  addBtnSuccess: {
+    backgroundColor: '#22C55E',
   },
   addBtnText: {
     color: colors.bg,

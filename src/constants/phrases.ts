@@ -10,7 +10,7 @@ export const PHRASES: Phrase[] = [
   { ar: 'اللَّٰهُ أَكْبَر',           ro: 'Allahu Akbar',     en: 'Allah is the Greatest' },
   { ar: 'أَسْتَغْفِرُ اللَّٰه',      ro: 'Astaghfirullah',   en: 'I seek forgiveness from Allah' },
   { ar: 'لَا إِلٰهَ إِلَّا اللَّٰه', ro: 'La ilaha illallah', en: 'There is no god but Allah' },
-  { ar: 'صَلِّ عَلَى النَّبِيّ',     ro: 'Salawat',          en: 'Send blessings upon the Prophet' },
+  { ar: 'اللَّهُمَّ صَلِّ عَلَى مُحَمَّد', ro: 'Salawat',        en: 'Send blessings upon the Prophet ﷺ' },
 ];
 
 export const TARGETS = [33, 99, 100, 1000, 0] as const;

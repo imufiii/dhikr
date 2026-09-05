@@ -3,7 +3,9 @@ import {
   Animated,
   Dimensions,
   Easing,
+  Modal,
   PanResponder,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -16,14 +18,21 @@ import Svg, { Circle } from 'react-native-svg';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, fonts } from '../constants/theme';
 import { PHRASES, TARGETS } from '../constants/phrases';
-import { loadState, saveState, DhikrState, SessionRecord, CustomPhrase, todayString } from '../store/dhikrStore';
+import { loadState, saveState, DhikrState, SessionRecord, CustomPhrase, todayString, DailyDuaRecord } from '../store/dhikrStore';
 import { useShakeDetector } from '../hooks/useShakeDetector';
 import { usePocketMode } from '../hooks/usePocketMode';
-import { useVolumeButton } from '../hooks/useVolumeButton';
 import HistoryModal from '../components/HistoryModal';
 import SettingsModal from '../components/SettingsModal';
 import PhrasesModal from '../components/PhrasesModal';
+import BarakahBudgetCard from '../components/BarakahBudgetCard';
+import ImportDuaModal from '../components/ImportDuaModal';
+import DuaLibrary from '../components/DuaLibrary';
+import MyDayModal from '../components/MyDayModal';
 import { usePrayerTimes } from '../hooks/usePrayerTimes';
+import { UNIVERSAL_DUAS, UserDua } from '../constants/universalDuas';
+import { RoutineItem } from '../constants/routine';
+import { enableReminders, disableReminders } from '../utils/reminders';
+import NavIcon from '../components/NavIcon';
 
 const { width } = Dimensions.get('window');
 const RING_SIZE = Math.min(width * 0.72, 340);
@@ -43,7 +52,6 @@ export default function DhikrScreen() {
   const [target, setTarget] = useState(33);
   const [haptic, setHaptic] = useState(true);
   const [shake, setShake] = useState(true);
-  const [volumeBtn, setVolumeBtn] = useState(true);
   const [history, setHistory] = useState<SessionRecord[]>([]);
   const [todayCount, setTodayCount] = useState(0);
   const [dailyTotals, setDailyTotals] = useState<Record<string, number>>({});
@@ -53,6 +61,21 @@ export default function DhikrScreen() {
   const [showSettings, setShowSettings] = useState(false);
   const [showPhrases, setShowPhrases] = useState(false);
   const [completing, setCompleting] = useState(false);
+  const [budgetCardShown, setBudgetCardShown] = useState(false);
+  const [showBudgetCard, setShowBudgetCard] = useState(false);
+  const [userDuas, setUserDuas] = useState<UserDua[]>(UNIVERSAL_DUAS);
+  const [removedBuiltInDuaIds, setRemovedBuiltInDuaIds] = useState<string[]>([]);
+  const [selectedDuaId, setSelectedDuaId] = useState<string | null>(UNIVERSAL_DUAS[0].id);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [showDuaLibrary, setShowDuaLibrary] = useState(false);
+  const [editingDua, setEditingDua] = useState<UserDua | null>(null);
+  const [showMyDay, setShowMyDay] = useState(false);
+  const [routineDone, setRoutineDone] = useState<string[]>([]);
+  const [routineDisabled, setRoutineDisabled] = useState<string[]>([]);
+  const [routineCustom, setRoutineCustom] = useState<RoutineItem[]>([]);
+  const [showDuasBtn, setShowDuasBtn] = useState(true);
+  const [showMyDayBtn, setShowMyDayBtn] = useState(true);
+  const [remindersEnabled, setRemindersEnabled] = useState(false);
 
   const sessionStart = useRef(Date.now());
   const lastDateRef = useRef('');
@@ -76,13 +99,34 @@ export default function DhikrScreen() {
       setTarget(s.target);
       setHaptic(s.haptic);
       setShake(s.shake ?? true);
-      setVolumeBtn(s.volumeBtn ?? true);
       setHistory(s.history);
       setTodayCount(s.todayCount ?? 0);
       setDailyTotals(s.dailyTotals ?? {});
       setPhraseTotals(s.phraseTotals ?? {});
       setCustomPhrases(s.customPhrases ?? []);
       lastDateRef.current = s.lastDate;
+      const shown = s.budgetCardShown ?? false;
+      setBudgetCardShown(shown);
+      const removedIds = s.removedBuiltInDuaIds ?? [];
+      setRemovedBuiltInDuaIds(removedIds);
+      // Routine check-offs are per-day; keep them only if they're from today.
+      setRoutineDone(s.routineDate === todayString() ? (s.routineDone ?? []) : []);
+      setRoutineDisabled(s.routineDisabled ?? []);
+      setRoutineCustom(s.routineCustom ?? []);
+      setShowDuasBtn(s.showDuasBtn ?? true);
+      setShowMyDayBtn(s.showMyDayBtn ?? true);
+      setRemindersEnabled(s.remindersEnabled ?? false);
+      if (s.userDuas && s.userDuas.length > 0) {
+        // Built-in dua metadata (titles, wording) always comes from code so it
+        // stays current; only the user's own custom duas persist from storage.
+        // Built-ins the user deleted are filtered out by their saved ids.
+        const customDuas = s.userDuas.filter(d => !d.isBuiltIn);
+        const builtIns = UNIVERSAL_DUAS.filter(d => !removedIds.includes(d.id));
+        const merged = [...builtIns, ...customDuas];
+        setUserDuas(merged);
+        if (merged.length > 0) setSelectedDuaId(merged[0].id);
+        else setSelectedDuaId(null);
+      }
       setReady(true);
     });
     activateKeepAwakeAsync();
@@ -100,6 +144,7 @@ export default function DhikrScreen() {
           setDailyTotals(d => ({ ...d, [oldDate]: oldCount }));
         }
         setTodayCount(0);
+        setRoutineDone([]);
         lastDateRef.current = today;
       }
     }, 60_000);
@@ -108,8 +153,8 @@ export default function DhikrScreen() {
 
   useEffect(() => {
     if (!ready) return;
-    saveState({ phraseIndex, target, haptic, shake, volumeBtn, history, todayCount, lastDate: lastDateRef.current, dailyTotals, phraseTotals, customPhrases });
-  }, [phraseIndex, target, haptic, shake, volumeBtn, history, todayCount, dailyTotals, phraseTotals, customPhrases, ready]);
+    saveState({ phraseIndex, target, haptic, shake, history, todayCount, lastDate: lastDateRef.current, dailyTotals, phraseTotals, customPhrases, budgetCardShown, userDuas, removedBuiltInDuaIds, routineDate: todayString(), routineDone, routineDisabled, routineCustom, showDuasBtn, showMyDayBtn, remindersEnabled });
+  }, [phraseIndex, target, haptic, shake, history, todayCount, dailyTotals, phraseTotals, customPhrases, budgetCardShown, userDuas, removedBuiltInDuaIds, routineDone, routineDisabled, routineCustom, showDuasBtn, showMyDayBtn, remindersEnabled, ready]);
 
   useEffect(() => {
     const pct = target > 0 ? Math.min(count / target, 1) : 0;
@@ -163,9 +208,16 @@ export default function DhikrScreen() {
     setHistory(h => [record, ...h].slice(0, 30));
     setTodayCount(t => t + currentCount);
     setPhraseTotals(pt => ({ ...pt, [currentPhrase.ro]: (pt[currentPhrase.ro] ?? 0) + currentCount }));
-    triggerHaptic('complete');
+    if (pocketMode && haptic) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    } else {
+      triggerHaptic('complete');
+    }
     flashScreen();
     showBanner();
+    if (!budgetCardShown && history.length >= 2) {
+      setTimeout(() => setShowBudgetCard(true), 2600);
+    }
     setTimeout(() => {
       setCount(0);
       sessionStart.current = Date.now();
@@ -194,8 +246,8 @@ export default function DhikrScreen() {
   const reset = useCallback(() => {
     if (countRef.current > 0) {
       const duration = Math.round((Date.now() - sessionStart.current) / 1000);
-      const ro = allPhrases[phraseIndexRef.current]?.ro ?? PHRASES[phraseIndexRef.current].ro;
-      const ar = allPhrases[phraseIndexRef.current]?.ar ?? PHRASES[phraseIndexRef.current].ar;
+      const ro = allPhrasesRef.current[phraseIndexRef.current]?.ro ?? PHRASES[phraseIndexRef.current].ro;
+      const ar = allPhrasesRef.current[phraseIndexRef.current]?.ar ?? PHRASES[phraseIndexRef.current].ar;
       const record: SessionRecord = {
         phraseRo: ro, phraseAr: ar,
         count: countRef.current, target: targetRef.current, duration,
@@ -213,8 +265,8 @@ export default function DhikrScreen() {
   const switchPhrase = useCallback((delta: number) => {
     if (countRef.current > 0) {
       const duration = Math.round((Date.now() - sessionStart.current) / 1000);
-      const ro = allPhrases[phraseIndexRef.current]?.ro ?? PHRASES[phraseIndexRef.current].ro;
-      const ar = allPhrases[phraseIndexRef.current]?.ar ?? PHRASES[phraseIndexRef.current].ar;
+      const ro = allPhrasesRef.current[phraseIndexRef.current]?.ro ?? PHRASES[phraseIndexRef.current].ro;
+      const ar = allPhrasesRef.current[phraseIndexRef.current]?.ar ?? PHRASES[phraseIndexRef.current].ar;
       const record: SessionRecord = {
         phraseRo: ro, phraseAr: ar,
         count: countRef.current, target: targetRef.current, duration,
@@ -226,7 +278,7 @@ export default function DhikrScreen() {
     setCount(0);
     sessionStart.current = Date.now();
     progressAnim.setValue(0);
-    setPhraseIndex(i => (i + delta + allPhrases.length) % allPhrases.length);
+    setPhraseIndex(i => (i + delta + allPhrasesRef.current.length) % allPhrasesRef.current.length);
     triggerHaptic('light');
   }, [triggerHaptic]);
 
@@ -244,6 +296,76 @@ export default function DhikrScreen() {
     })
   ).current;
 
+  // Upsert: replace when the id already exists (edit), otherwise append (add).
+  const handleSaveDua = useCallback((dua: UserDua) => {
+    setUserDuas(d => d.some(x => x.id === dua.id)
+      ? d.map(x => x.id === dua.id ? dua : x)
+      : [...d, dua]);
+    setShowImportModal(false);
+    setEditingDua(null);
+  }, []);
+
+  const handleEditDua = useCallback((dua: UserDua) => {
+    setEditingDua(dua);
+    setShowDuaLibrary(false);
+    setShowImportModal(true);
+  }, []);
+
+  const handleAddPress = useCallback(() => {
+    setEditingDua(null);
+    setShowDuaLibrary(false);
+    setShowImportModal(true);
+  }, []);
+
+  const handleDeleteDua = useCallback((id: string) => {
+    const removed = userDuas.find(x => x.id === id);
+    const filtered = userDuas.filter(x => x.id !== id);
+    setUserDuas(filtered);
+    // Remember deleted built-ins so they don't reappear on next launch.
+    if (removed?.isBuiltIn) {
+      setRemovedBuiltInDuaIds(ids => ids.includes(id) ? ids : [...ids, id]);
+    }
+    if (selectedDuaId === id) {
+      setSelectedDuaId(filtered[0]?.id || null);
+    }
+  }, [selectedDuaId, userDuas]);
+
+  const toggleRoutineItem = useCallback((id: string) => {
+    setRoutineDone(d => d.includes(id) ? d.filter(x => x !== id) : [...d, id]);
+  }, []);
+
+  const toggleRoutineEnabled = useCallback((id: string) => {
+    setRoutineDisabled(d => d.includes(id) ? d.filter(x => x !== id) : [...d, id]);
+  }, []);
+
+  const addRoutineItem = useCallback((item: RoutineItem) => {
+    setRoutineCustom(c => [...c, item]);
+  }, []);
+
+  const removeRoutineCustom = useCallback((id: string) => {
+    setRoutineCustom(c => c.filter(x => x.id !== id));
+    setRoutineDone(d => d.filter(x => x !== id));
+  }, []);
+
+  const handleReminders = useCallback((v: boolean) => {
+    if (v) {
+      setRemindersEnabled(true);
+      enableReminders().then(granted => { if (!granted) setRemindersEnabled(false); });
+    } else {
+      setRemindersEnabled(false);
+      disableReminders();
+    }
+  }, []);
+
+  // Bring back any removed built-in duas (non-destructive — keeps custom duas).
+  const handleRestoreBuiltIns = useCallback(() => {
+    setUserDuas(current => {
+      const customDuas = current.filter(d => !d.isBuiltIn);
+      return [...UNIVERSAL_DUAS, ...customDuas];
+    });
+    setRemovedBuiltInDuaIds([]);
+  }, []);
+
   const selectTarget = useCallback((t: number) => {
     setTarget(t);
     setCount(0);
@@ -256,10 +378,19 @@ export default function DhikrScreen() {
   const allPhrasesRef = useRef(allPhrases);
   useEffect(() => { allPhrasesRef.current = allPhrases; }, [allPhrases]);
 
-  const { pocketMode, enterPocketMode, exitPocketMode } = usePocketMode();
-  const { nextPrayer } = usePrayerTimes();
+  const { pocketMode, enterPocketMode: pocketModeEnter, exitPocketMode: pocketModeExit } = usePocketMode();
+
+  const enterPocketMode = useCallback(async () => {
+    await pocketModeEnter();
+  }, [pocketModeEnter]);
+
+  const exitPocketMode = useCallback(async () => {
+    await pocketModeExit();
+    triggerHaptic('complete');
+    showBanner();
+  }, [pocketModeExit, triggerHaptic, showBanner]);
+  const { nextPrayer, locationDenied } = usePrayerTimes();
   useShakeDetector({ enabled: shake, onShake: increment });
-  useVolumeButton({ enabled: volumeBtn, onPress: increment });
 
   const strokeDashoffset = progressAnim.interpolate({
     inputRange: [0, 1],
@@ -310,7 +441,9 @@ export default function DhikrScreen() {
       </TouchableOpacity>
 
       {nextPrayer && (
-        <Text style={styles.nextPrayer}>{nextPrayer.name} · {nextPrayer.timeString}</Text>
+        <Text style={styles.nextPrayer}>
+          {nextPrayer.name} · {nextPrayer.timeString}{locationDenied ? ' · Mecca' : ''}
+        </Text>
       )}
 
       <Pressable
@@ -375,26 +508,50 @@ export default function DhikrScreen() {
           ))}
         </View>
 
-        <View style={styles.actions}>
-          <TouchableOpacity style={styles.actionBtn} onPress={() => setShowHistory(true)}>
-            <Text style={styles.actionIcon}>⏱</Text>
-            <Text style={styles.actionLabel}>History</Text>
+        {/* Counter actions — Reset & Pocket live with the counter, not the nav */}
+        <View style={styles.counterActions}>
+          <TouchableOpacity style={styles.actionPill} onPress={reset} activeOpacity={0.7}>
+            <NavIcon name="reset" size={15} color={colors.muted} />
+            <Text style={styles.actionPillText}>Reset</Text>
           </TouchableOpacity>
-
-          <View style={styles.centerBtns}>
-            <TouchableOpacity style={styles.resetBtn} onPress={reset}>
-              <Text style={styles.resetIcon}>↺</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.pocketBtn} onPress={enterPocketMode}>
-              <Text style={styles.pocketLabel}>Pocket</Text>
-            </TouchableOpacity>
-          </View>
-
-          <TouchableOpacity style={styles.actionBtn} onPress={() => setShowSettings(true)}>
-            <Text style={styles.actionIcon}>⚙️</Text>
-            <Text style={styles.actionLabel}>Settings</Text>
+          <TouchableOpacity
+            style={[styles.actionPill, pocketMode && styles.actionPillActive]}
+            onPress={pocketMode ? exitPocketMode : enterPocketMode}
+            onLongPress={exitPocketMode}
+            delayLongPress={800}
+            activeOpacity={0.7}
+          >
+            <NavIcon name="pocket" size={15} color={pocketMode ? colors.bg : colors.gold} />
+            <Text style={[styles.actionPillText, pocketMode && styles.actionPillTextActive]}>
+              {pocketMode ? 'Exit pocket' : 'Pocket'}
+            </Text>
           </TouchableOpacity>
         </View>
+
+        {/* Bottom tab bar — navigation only, evenly spaced */}
+        <View style={styles.tabBar}>
+          <TouchableOpacity style={styles.tab} onPress={() => { setShowDuaLibrary(false); setShowMyDay(false); setShowSettings(false); }} activeOpacity={0.7}>
+            <NavIcon name="counter" size={22} color={colors.gold} />
+            <Text style={[styles.tabLabel, styles.tabLabelActive]}>Counter</Text>
+          </TouchableOpacity>
+          {showDuasBtn && (
+            <TouchableOpacity style={styles.tab} onPress={() => setShowDuaLibrary(true)} activeOpacity={0.7}>
+              <NavIcon name="duas" size={22} color={colors.muted} />
+              <Text style={styles.tabLabel}>Duas</Text>
+            </TouchableOpacity>
+          )}
+          {showMyDayBtn && (
+            <TouchableOpacity style={styles.tab} onPress={() => setShowMyDay(true)} activeOpacity={0.7}>
+              <NavIcon name="myday" size={22} color={colors.muted} />
+              <Text style={styles.tabLabel}>My Day</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={styles.tab} onPress={() => setShowSettings(true)} activeOpacity={0.7}>
+            <NavIcon name="settings" size={22} color={colors.muted} />
+            <Text style={styles.tabLabel}>Settings</Text>
+          </TouchableOpacity>
+        </View>
+
       </View>
 
       <HistoryModal
@@ -412,11 +569,16 @@ export default function DhikrScreen() {
         setHaptic={setHaptic}
         shake={shake}
         setShake={setShake}
-        volumeBtn={volumeBtn}
-        setVolumeBtn={setVolumeBtn}
         target={target}
         selectTarget={selectTarget}
+        showDuasBtn={showDuasBtn}
+        setShowDuasBtn={setShowDuasBtn}
+        showMyDayBtn={showMyDayBtn}
+        setShowMyDayBtn={setShowMyDayBtn}
+        remindersEnabled={remindersEnabled}
+        setRemindersEnabled={handleReminders}
         onManagePhrases={() => { setShowSettings(false); setShowPhrases(true); }}
+        onHistory={() => { setShowSettings(false); setShowHistory(true); }}
         onClose={() => setShowSettings(false)}
       />
       <PhrasesModal
@@ -431,6 +593,50 @@ export default function DhikrScreen() {
           }
         }}
         onClose={() => setShowPhrases(false)}
+      />
+
+      <Modal visible={showBudgetCard} transparent animationType="slide" onRequestClose={() => { setShowBudgetCard(false); setBudgetCardShown(true); }}>
+        <Pressable style={styles.budgetOverlay} onPress={() => { setShowBudgetCard(false); setBudgetCardShown(true); }}>
+          <Pressable style={styles.budgetSheet} onPress={() => {}}>
+            <View style={styles.budgetHandle} />
+            <Text style={styles.budgetHeading}>Jazakallah khayr</Text>
+            <Text style={styles.budgetSub}>Complete your deen with halal finance</Text>
+            <BarakahBudgetCard />
+            <TouchableOpacity onPress={() => { setShowBudgetCard(false); setBudgetCardShown(true); }}>
+              <Text style={styles.budgetDismiss}>Maybe later</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      <ImportDuaModal
+        visible={showImportModal}
+        initialDua={editingDua}
+        onAdd={handleSaveDua}
+        onClose={() => { setShowImportModal(false); setEditingDua(null); }}
+      />
+
+      <DuaLibrary
+        visible={showDuaLibrary}
+        duas={userDuas}
+        removedCount={removedBuiltInDuaIds.length}
+        onAddPress={handleAddPress}
+        onEdit={handleEditDua}
+        onDelete={handleDeleteDua}
+        onRestoreBuiltIns={handleRestoreBuiltIns}
+        onClose={() => setShowDuaLibrary(false)}
+      />
+
+      <MyDayModal
+        visible={showMyDay}
+        doneIds={routineDone}
+        disabledIds={routineDisabled}
+        customItems={routineCustom}
+        onToggle={toggleRoutineItem}
+        onToggleEnabled={toggleRoutineEnabled}
+        onAddItem={addRoutineItem}
+        onRemoveCustom={removeRoutineCustom}
+        onClose={() => setShowMyDay(false)}
       />
     </SafeAreaView>
   );
@@ -578,56 +784,58 @@ const styles = StyleSheet.create({
   pillTextActive: {
     color: colors.gold,
   },
-  actions: {
+  counterActions: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
+    marginTop: 2,
+    marginBottom: 4,
+  },
+  actionPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 32,
-  },
-  actionBtn: {
-    alignItems: 'center',
-    gap: 4,
-    minHeight: 48,
-    justifyContent: 'center',
-  },
-  actionIcon: {
-    fontSize: 22,
-  },
-  actionLabel: {
-    fontSize: 10,
-    color: colors.muted,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    fontFamily: fonts.ui,
-  },
-  centerBtns: {
-    alignItems: 'center',
-    gap: 6,
-  },
-  resetBtn: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.muted2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  resetIcon: {
-    fontSize: 24,
-    color: colors.muted,
-  },
-  pocketBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
+    gap: 7,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 22,
     backgroundColor: colors.muted2,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
-  pocketLabel: {
+  actionPillActive: {
+    backgroundColor: colors.gold,
+  },
+  actionPillText: {
+    fontSize: 12.5,
+    color: colors.muted,
+    fontFamily: fonts.uiBold,
+  },
+  actionPillTextActive: {
+    color: colors.bg,
+  },
+  tabBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.06)',
+    paddingTop: 10,
+  },
+  tab: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 2,
+  },
+  tabLabel: {
     fontSize: 10,
     color: colors.muted,
     letterSpacing: 0.5,
-    textTransform: 'uppercase',
+    fontFamily: fonts.ui,
+  },
+  tabLabelActive: {
+    color: colors.gold,
+    fontFamily: fonts.uiBold,
   },
   pocketOverlay: {
     ...StyleSheet.absoluteFill,
@@ -642,5 +850,51 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     backgroundColor: colors.gold,
     opacity: 0.3,
+  },
+  budgetOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(10,20,18,0.88)',
+    justifyContent: 'flex-end',
+  },
+  budgetSheet: {
+    backgroundColor: '#111C2A',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingTop: 12,
+    paddingHorizontal: 20,
+    paddingBottom: Platform.OS === 'ios' ? 44 : 28,
+    borderTopWidth: 1,
+    borderTopColor: colors.goldDim,
+    gap: 6,
+  },
+  budgetHandle: {
+    width: 36,
+    height: 4,
+    backgroundColor: colors.muted2,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 12,
+  },
+  budgetHeading: {
+    fontSize: 18,
+    color: colors.white,
+    fontFamily: fonts.uiBold,
+    textAlign: 'center',
+  },
+  budgetSub: {
+    fontSize: 12,
+    color: colors.muted,
+    fontFamily: fonts.ui,
+    textAlign: 'center',
+    marginBottom: 8,
+    opacity: 0.8,
+  },
+  budgetDismiss: {
+    fontSize: 12,
+    color: colors.muted,
+    textAlign: 'center',
+    fontFamily: fonts.ui,
+    paddingVertical: 8,
+    opacity: 0.5,
   },
 });

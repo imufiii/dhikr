@@ -16,11 +16,16 @@ interface Props {
   setHaptic: (v: boolean) => void;
   shake: boolean;
   setShake: (v: boolean) => void;
-  volumeBtn: boolean;
-  setVolumeBtn: (v: boolean) => void;
   target: number;
   selectTarget: (t: number) => void;
+  showDuasBtn: boolean;
+  setShowDuasBtn: (v: boolean) => void;
+  showMyDayBtn: boolean;
+  setShowMyDayBtn: (v: boolean) => void;
+  remindersEnabled: boolean;
+  setRemindersEnabled: (v: boolean) => void;
   onManagePhrases: () => void;
+  onHistory: () => void;
   onClose: () => void;
 }
 
@@ -32,12 +37,12 @@ function Icon({ symbol, bg }: { symbol: string; bg: string }) {
   );
 }
 
-function SwitchRow({ icon, bg, label, sub, value, onChange }: {
+function SwitchRow({ icon, bg, label, sub, value, onChange, last }: {
   icon: string; bg: string; label: string; sub: string;
-  value: boolean; onChange: (v: boolean) => void;
+  value: boolean; onChange: (v: boolean) => void; last?: boolean;
 }) {
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, last && styles.rowLast]}>
       <Icon symbol={icon} bg={bg} />
       <View style={styles.rowText}>
         <Text style={styles.label}>{label}</Text>
@@ -68,8 +73,10 @@ function LinkRow({ icon, bg, label, sub, onPress, last }: {
 
 export default function SettingsModal({
   visible, haptic, setHaptic, shake, setShake,
-  volumeBtn, setVolumeBtn, target, selectTarget,
-  onManagePhrases, onClose,
+  target, selectTarget,
+  showDuasBtn, setShowDuasBtn, showMyDayBtn, setShowMyDayBtn,
+  remindersEnabled, setRemindersEnabled,
+  onManagePhrases, onHistory, onClose,
 }: Props) {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -84,17 +91,20 @@ export default function SettingsModal({
             <Text style={styles.sectionLabel}>Counter</Text>
             <View style={styles.card}>
               <SwitchRow icon="◎" bg="#1A3A2A" label="Haptic Feedback" sub="Vibrate on each count" value={haptic} onChange={setHaptic} />
-              <SwitchRow icon="⟲" bg="#1A2A3A" label="Shake to Count" sub="Shake phone to increment" value={shake} onChange={setShake} />
-              <View style={[styles.row, styles.rowLast]}>
-                <Icon symbol="◁" bg="#2A1A3A" />
-                <View style={styles.rowText}>
-                  <Text style={styles.label}>Volume Button</Text>
-                  <Text style={styles.sub}>Android · counts on lock screen</Text>
-                </View>
-                <Switch value={volumeBtn} onValueChange={setVolumeBtn}
-                  trackColor={{ false: colors.muted2, true: colors.gold }}
-                  thumbColor={colors.white} />
-              </View>
+              <SwitchRow icon="⟲" bg="#1A2A3A" label="Shake to Count" sub="Shake phone to increment" value={shake} onChange={setShake} last />
+            </View>
+
+            {/* Home screen */}
+            <Text style={styles.sectionLabel}>Home screen</Text>
+            <View style={styles.card}>
+              <SwitchRow icon="📖" bg="#1A3A2A" label="Show Duas button" sub="A dua library on the home screen" value={showDuasBtn} onChange={setShowDuasBtn} />
+              <SwitchRow icon="🗓" bg="#2A2A1A" label="Show My Day button" sub="A daily worship routine" value={showMyDayBtn} onChange={setShowMyDayBtn} last />
+            </View>
+
+            {/* Reminders */}
+            <Text style={styles.sectionLabel}>Reminders</Text>
+            <View style={styles.card}>
+              <SwitchRow icon="⏰" bg="#1A2A3A" label="Daily reminders" sub="Gentle nudges for morning, evening & before sleep" value={remindersEnabled} onChange={setRemindersEnabled} last />
             </View>
 
             {/* Target */}
@@ -123,7 +133,13 @@ export default function SettingsModal({
             {/* Phrases */}
             <Text style={styles.sectionLabel}>Phrases</Text>
             <View style={styles.card}>
-              <LinkRow icon="۞" bg="#1A2A2A" label="Custom Phrases" sub="Add your own Arabic dhikr" onPress={onManagePhrases} last />
+              <LinkRow icon="۞" bg="#1A2A2A" label="Custom Phrases" sub="Add your own Arabic dhikr" onPress={onManagePhrases} />
+            </View>
+
+            {/* Activity */}
+            <Text style={styles.sectionLabel}>Activity</Text>
+            <View style={styles.card}>
+              <LinkRow icon="⏱" bg="#1A2A3A" label="History" sub="Your past dhikr sessions" onPress={onHistory} last />
             </View>
 
             {/* About */}
@@ -134,6 +150,9 @@ export default function SettingsModal({
               <LinkRow icon="≡" bg="#2A2A1A" label="Terms of Use" sub="imufiii.github.io/dhikr" onPress={() => Linking.openURL(TERMS_URL)} last />
             </View>
 
+            {/* The live served Noor ad now lives on the main screen (a single
+                serve per session). This stays a static Barakah Budget cross-promo. */}
+            <Text style={styles.sectionLabel}>Also from us</Text>
             <BarakahBudgetCard />
 
             <Text style={styles.version}>Dhikr · v1.0.0</Text>
