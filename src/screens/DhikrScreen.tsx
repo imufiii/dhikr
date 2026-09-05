@@ -501,8 +501,6 @@ export default function DhikrScreen() {
         target={target}
         selectTarget={selectTarget}
         onManagePhrases={() => { setShowSettings(false); setShowPhrases(true); }}
-        onImportDua={() => { setShowSettings(false); setShowImportModal(true); }}
-        onManageDuas={() => { setShowSettings(false); setShowDuaLibrary(true); }}
         onHistory={() => { setShowSettings(false); setShowHistory(true); }}
         onClose={() => setShowSettings(false)}
       />
