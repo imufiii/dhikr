@@ -2,7 +2,7 @@
   "expo": {
     "name": "Dhikr",
     "slug": "dhikr",
-    "version": "1.1.13",
+    "version": "1.1.14",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
