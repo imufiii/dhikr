@@ -2,7 +2,7 @@
   "expo": {
     "name": "Dhikr",
     "slug": "dhikr",
-    "version": "1.1.9",
+    "version": "1.1.10",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -12,7 +12,7 @@
       "privacyPolicyUrl": "https://imufiii.github.io/dhikr/privacy.html",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Used to calculate local prayer times.",
-"ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
