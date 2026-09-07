@@ -209,7 +209,11 @@ export default function DhikrScreen() {
     setTodayCount(t => t + currentCount);
     setPhraseTotals(pt => ({ ...pt, [currentPhrase.ro]: (pt[currentPhrase.ro] ?? 0) + currentCount }));
     if (pocketMode && haptic) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      // Cycle-complete in pocket mode: a distinct triple pulse you can't mistake
+      // for a single count tap (the screen is dark, so touch is the only signal).
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 150);
+      setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy), 300);
     } else {
       triggerHaptic('complete');
     }
@@ -421,6 +425,10 @@ export default function DhikrScreen() {
           delayLongPress={600}
         >
           <View style={styles.pocketDot} />
+          <View style={styles.pocketHint} pointerEvents="none">
+            <Text style={styles.pocketHintText}>Tap anywhere to count</Text>
+            <Text style={styles.pocketHintExit}>Press and hold to exit</Text>
+          </View>
         </Pressable>
       )}
 
@@ -850,6 +858,25 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     backgroundColor: colors.gold,
     opacity: 0.3,
+  },
+  pocketHint: {
+    position: 'absolute',
+    bottom: 72,
+    alignItems: 'center',
+    gap: 10,
+  },
+  pocketHintText: {
+    fontSize: 14,
+    color: 'rgba(201,168,76,0.75)',
+    fontFamily: fonts.ui,
+    letterSpacing: 0.5,
+  },
+  pocketHintExit: {
+    fontSize: 12.5,
+    color: 'rgba(245,240,232,0.6)',
+    fontFamily: fonts.uiBold,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
   budgetOverlay: {
     flex: 1,
