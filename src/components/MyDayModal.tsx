@@ -5,9 +5,7 @@ import {
 } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { colors, fonts } from '../constants/theme';
-import {
-  DEFAULT_ROUTINE, ROUTINE_BLOCKS, RULING_LABEL, Ruling, RoutineItem,
-} from '../constants/routine';
+import { DEFAULT_ROUTINE, ROUTINE_BLOCKS, RoutineItem } from '../constants/routine';
 
 interface Props {
   visible: boolean;
@@ -20,14 +18,6 @@ interface Props {
   onRemoveCustom: (id: string) => void;
   onClose: () => void;
 }
-
-const RULING_STYLE: Record<Ruling, { color: string; bg: string }> = {
-  fard:        { color: '#6FBF9A', bg: 'rgba(111,191,154,0.14)' },
-  sunnah:      { color: colors.gold, bg: 'rgba(201,168,76,0.14)' },
-  nafl:        { color: '#7FA8C9', bg: 'rgba(127,168,201,0.14)' },
-  recommended: { color: '#9AA7B2', bg: 'rgba(154,167,178,0.14)' },
-};
-const RULINGS: Ruling[] = ['fard', 'sunnah', 'nafl', 'recommended'];
 
 function todayLabel() {
   return new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' });
@@ -46,7 +36,6 @@ export default function MyDayModal({
   const [title, setTitle] = useState('');
   const [sub, setSub] = useState('');
   const [block, setBlock] = useState(ROUTINE_BLOCKS[0].key);
-  const [ruling, setRuling] = useState<Ruling>('sunnah');
 
   const done = useMemo(() => new Set(doneIds), [doneIds]);
   const disabled = useMemo(() => new Set(disabledIds), [disabledIds]);
@@ -60,8 +49,8 @@ export default function MyDayModal({
   const submitAdd = () => {
     const t = title.trim();
     if (!t) return;
-    onAddItem({ id: `c_${Date.now()}`, title: t, sub: sub.trim() || undefined, block, ruling });
-    setTitle(''); setSub(''); setBlock(ROUTINE_BLOCKS[0].key); setRuling('sunnah');
+    onAddItem({ id: `c_${Date.now()}`, title: t, sub: sub.trim() || undefined, block });
+    setTitle(''); setSub(''); setBlock(ROUTINE_BLOCKS[0].key);
     setAdding(false);
   };
 
@@ -75,7 +64,8 @@ export default function MyDayModal({
           keyboardVerticalOffset={0}
           style={{ flex: 1, justifyContent: 'flex-end' }}
         >
-          <View style={styles.sheet}>
+          {/* Swallow taps inside the sheet so they don't close it (backdrop only). */}
+          <Pressable style={styles.sheet} onPress={() => {}}>
             <View style={styles.handle} />
 
             <View style={styles.headerRow}>
@@ -123,7 +113,6 @@ export default function MyDayModal({
                         const isDone = done.has(item.id);
                         const isDisabled = disabled.has(item.id);
                         const isCustom = customIds.has(item.id);
-                        const rs = RULING_STYLE[item.ruling];
                         return (
                           <View
                             key={item.id}
@@ -160,10 +149,6 @@ export default function MyDayModal({
                               <Text style={[styles.itemTitle, isDone && !editing && styles.itemTitleDone]}>{item.title}</Text>
                               {!!item.sub && <Text style={styles.itemSub}>{item.sub}</Text>}
                             </TouchableOpacity>
-
-                            <View style={[styles.badge, { backgroundColor: rs.bg }]}>
-                              <Text style={[styles.badgeText, { color: rs.color }]}>{RULING_LABEL[item.ruling]}</Text>
-                            </View>
                           </View>
                         );
                       })}
@@ -209,19 +194,6 @@ export default function MyDayModal({
                     ))}
                   </View>
 
-                  <Text style={styles.formSub}>Ruling</Text>
-                  <View style={styles.pickRow}>
-                    {RULINGS.map(r => (
-                      <TouchableOpacity
-                        key={r}
-                        style={[styles.pick, ruling === r && styles.pickActive]}
-                        onPress={() => setRuling(r)}
-                      >
-                        <Text style={[styles.pickText, ruling === r && styles.pickTextActive]}>{RULING_LABEL[r]}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-
                   <View style={styles.formActions}>
                     <TouchableOpacity style={[styles.formBtn, styles.formCancel]} onPress={() => setAdding(false)}>
                       <Text style={styles.formCancelText}>Cancel</Text>
@@ -242,7 +214,7 @@ export default function MyDayModal({
                 </Text>
               )}
             </ScrollView>
-          </View>
+          </Pressable>
         </KeyboardAvoidingView>
       </Pressable>
     </Modal>
@@ -307,8 +279,6 @@ const styles = StyleSheet.create({
   itemTitleDone: { color: colors.muted },
   itemSub: { fontSize: 11, color: colors.muted, fontFamily: fonts.ui, marginTop: 2 },
 
-  badge: { borderRadius: 6, paddingVertical: 3, paddingHorizontal: 7 },
-  badgeText: { fontSize: 9, letterSpacing: 0.4, textTransform: 'uppercase', fontFamily: fonts.uiBold },
 
   addBtn: {
     borderWidth: 1, borderColor: colors.goldDim, borderStyle: 'dashed', borderRadius: 13,

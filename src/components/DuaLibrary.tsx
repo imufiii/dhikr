@@ -158,12 +158,13 @@ export default function DuaLibrary({ visible, duas, removedCount, onAddPress, on
           keyboardVerticalOffset={0}
           style={{ flex: 1, justifyContent: 'flex-end' }}
         >
-          <View style={styles.sheet}>
+          {/* Swallow taps inside the sheet so they don't close it (backdrop only). */}
+          <Pressable style={styles.sheet} onPress={() => {}}>
             <View style={styles.handle} />
             <View style={styles.headerRow}>
               <View>
                 <Text style={styles.title}>Duas</Text>
-                <Text style={styles.subtitle}>{duas.length} saved · Sunnah &amp; Qur’an</Text>
+                <Text style={styles.subtitle}>{duas.length} saved · Qur’an &amp; hadith</Text>
               </View>
               <TouchableOpacity style={styles.addBtn} onPress={onAddPress} activeOpacity={0.7}>
                 <Text style={styles.addBtnText}>＋ Add</Text>
@@ -245,7 +246,7 @@ export default function DuaLibrary({ visible, duas, removedCount, onAddPress, on
                 </TouchableOpacity>
               )}
             </ScrollView>
-          </View>
+          </Pressable>
         </KeyboardAvoidingView>
       </Pressable>
     </Modal>

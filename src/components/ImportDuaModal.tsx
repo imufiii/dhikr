@@ -69,6 +69,7 @@ export default function ImportDuaModal({ visible, initialDua, onAdd, onClose }: 
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 32}
           style={styles.sheet}
+          onStartShouldSetResponder={() => true}
         >
           <View style={styles.handle} />
           <Text style={styles.title}>{isEditing ? 'Edit Dua' : 'Add Dua'}</Text>

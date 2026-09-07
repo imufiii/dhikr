@@ -81,7 +81,8 @@ export default function SettingsModal({
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose}>
-        <View style={styles.sheet}>
+        {/* Swallow taps inside the sheet so they don't close it (backdrop only). */}
+        <Pressable style={styles.sheet} onPress={() => {}}>
           <View style={styles.handle} />
           <Text style={styles.sheetTitle}>Settings</Text>
 
@@ -158,7 +159,7 @@ export default function SettingsModal({
             <Text style={styles.version}>Dhikr · v1.0.0</Text>
 
           </ScrollView>
-        </View>
+        </Pressable>
       </Pressable>
     </Modal>
   );
