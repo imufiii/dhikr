@@ -52,9 +52,10 @@ export default function HistoryModal({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.overlay} onPress={onClose}>
-        {/* Swallow taps inside the sheet so they don't close it (backdrop only). */}
-        <Pressable style={styles.sheet} onPress={() => {}}>
+      <View style={styles.overlay}>
+        {/* Backdrop fills space above the sheet — tap to dismiss; sheet scrolls. */}
+        <Pressable style={{ flex: 1 }} onPress={onClose} />
+        <View style={styles.sheet}>
           <View style={styles.handle} />
 
           <ScrollView showsVerticalScrollIndicator={false}>
@@ -106,8 +107,8 @@ export default function HistoryModal({
               <Text style={styles.empty}>Complete a session to see your totals</Text>
             )}
           </ScrollView>
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
     </Modal>
   );
 }

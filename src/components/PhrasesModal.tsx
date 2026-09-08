@@ -33,13 +33,15 @@ export default function PhrasesModal({ visible, customPhrases, onAdd, onDelete, 
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.overlay} onPress={onClose}>
+      <View style={styles.overlay}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 32}
-          style={styles.sheet}
-          onStartShouldSetResponder={() => true}
+          style={{ flex: 1 }}
         >
+          {/* Backdrop fills space above the sheet — tap to dismiss; sheet scrolls. */}
+          <Pressable style={{ flex: 1 }} onPress={onClose} />
+          <View style={styles.sheet}>
           <View style={styles.handle} />
           <Text style={styles.title}>Custom Phrases</Text>
 
@@ -96,8 +98,9 @@ export default function PhrasesModal({ visible, customPhrases, onAdd, onDelete, 
               <Text style={styles.addBtnText}>{justAdded ? '✓ Added!' : 'Add Phrase'}</Text>
             </TouchableOpacity>
           </View>
+          </View>
         </KeyboardAvoidingView>
-      </Pressable>
+      </View>
     </Modal>
   );
 }

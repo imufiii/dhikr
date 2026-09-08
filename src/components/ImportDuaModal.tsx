@@ -64,13 +64,15 @@ export default function ImportDuaModal({ visible, initialDua, onAdd, onClose }: 
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.overlay} onPress={onClose}>
+      <View style={styles.overlay}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 32}
-          style={styles.sheet}
-          onStartShouldSetResponder={() => true}
+          style={{ flex: 1 }}
         >
+          {/* Backdrop fills space above the sheet — tap to dismiss; sheet scrolls. */}
+          <Pressable style={{ flex: 1 }} onPress={onClose} />
+          <View style={styles.sheet}>
           <View style={styles.handle} />
           <Text style={styles.title}>{isEditing ? 'Edit Dua' : 'Add Dua'}</Text>
           <Text style={styles.subtitle}>{isEditing ? 'Update the details below' : 'Search online, then paste here'}</Text>
@@ -147,8 +149,9 @@ export default function ImportDuaModal({ visible, initialDua, onAdd, onClose }: 
               </Text>
             </TouchableOpacity>
           </ScrollView>
+          </View>
         </KeyboardAvoidingView>
-      </Pressable>
+      </View>
     </Modal>
   );
 }

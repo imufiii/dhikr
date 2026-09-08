@@ -152,14 +152,15 @@ export default function DuaLibrary({ visible, duas, removedCount, onAddPress, on
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.overlay} onPress={onClose}>
+      <View style={styles.overlay}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={0}
-          style={{ flex: 1, justifyContent: 'flex-end' }}
+          style={{ flex: 1 }}
         >
-          {/* Swallow taps inside the sheet so they don't close it (backdrop only). */}
-          <Pressable style={styles.sheet} onPress={() => {}}>
+          {/* Backdrop fills space above the sheet — tap to dismiss; sheet scrolls. */}
+          <Pressable style={{ flex: 1 }} onPress={onClose} />
+          <View style={styles.sheet}>
             <View style={styles.handle} />
             <View style={styles.headerRow}>
               <View>
@@ -246,9 +247,9 @@ export default function DuaLibrary({ visible, duas, removedCount, onAddPress, on
                 </TouchableOpacity>
               )}
             </ScrollView>
-          </Pressable>
+          </View>
         </KeyboardAvoidingView>
-      </Pressable>
+      </View>
     </Modal>
   );
 }
