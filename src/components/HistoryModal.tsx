@@ -52,7 +52,9 @@ export default function HistoryModal({
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.overlay} onPress={onClose}>
+      <View style={styles.overlay}>
+        {/* Backdrop fills space above the sheet — tap to dismiss; sheet scrolls. */}
+        <Pressable style={{ flex: 1 }} onPress={onClose} />
         <View style={styles.sheet}>
           <View style={styles.handle} />
 
@@ -106,7 +108,7 @@ export default function HistoryModal({
             )}
           </ScrollView>
         </View>
-      </Pressable>
+      </View>
     </Modal>
   );
 }

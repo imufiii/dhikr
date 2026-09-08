@@ -1,4 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { UserDua } from '../constants/universalDuas';
+import { RoutineItem } from '../constants/routine';
 
 export interface SessionRecord {
   phraseRo: string;
@@ -15,18 +17,38 @@ export interface CustomPhrase {
   en: string;
 }
 
+export interface DailyDuaRecord {
+  duaId: string;
+  situation: string;
+  arabicText: string;
+  transliteration: string;
+  date: string;
+  timesRecited: number;
+}
+
 export interface DhikrState {
   phraseIndex: number;
   target: number;
   haptic: boolean;
   shake: boolean;
-  volumeBtn: boolean;
   history: SessionRecord[];
   todayCount: number;
   lastDate: string;
   dailyTotals: Record<string, number>;
   customPhrases: CustomPhrase[];
   phraseTotals: Record<string, number>;
+  budgetCardShown?: boolean;
+  todaysDua?: DailyDuaRecord | null;
+  duaHistory?: DailyDuaRecord[];
+  userDuas?: UserDua[];
+  removedBuiltInDuaIds?: string[];
+  routineDate?: string;
+  routineDone?: string[];
+  routineDisabled?: string[];
+  routineCustom?: RoutineItem[];
+  showDuasBtn?: boolean;
+  showMyDayBtn?: boolean;
+  remindersEnabled?: boolean;
 }
 
 const KEY = 'dhikr_state_v2';
@@ -36,7 +58,6 @@ const defaults: DhikrState = {
   target: 33,
   haptic: true,
   shake: true,
-  volumeBtn: true,
   history: [],
   todayCount: 0,
   lastDate: '',

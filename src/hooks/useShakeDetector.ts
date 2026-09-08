@@ -11,8 +11,8 @@ interface Options {
 export function useShakeDetector({
   enabled,
   onShake,
-  threshold = 1.8,
-  cooldown = 400,
+  threshold = 1.2,
+  cooldown = 300,
 }: Options) {
   const lastShake = useRef(0);
   const onShakeRef = useRef(onShake);
@@ -20,17 +20,23 @@ export function useShakeDetector({
 
   useEffect(() => {
     if (!enabled) return;
-    Accelerometer.setUpdateInterval(100);
-    const sub = Accelerometer.addListener(({ x, y, z }) => {
-      const magnitude = Math.sqrt(x * x + y * y + z * z);
-      if (magnitude > threshold) {
-        const now = Date.now();
-        if (now - lastShake.current > cooldown) {
-          lastShake.current = now;
-          onShakeRef.current();
+
+    try {
+      Accelerometer.setUpdateInterval(50);
+      const sub = Accelerometer.addListener(({ x, y, z }) => {
+        const magnitude = Math.sqrt(x * x + y * y + z * z);
+        if (magnitude > threshold) {
+          const now = Date.now();
+          if (now - lastShake.current > cooldown) {
+            lastShake.current = now;
+            onShakeRef.current();
+          }
         }
-      }
-    });
-    return () => sub.remove();
+      });
+      return () => sub.remove();
+    } catch (error) {
+      console.warn('Shake detector error:', error);
+      return;
+    }
   }, [enabled, threshold, cooldown]);
 }
